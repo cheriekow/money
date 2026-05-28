@@ -29,7 +29,21 @@ if ('serviceWorker' in navigator) {
           console.error('SW registration failed:', err);
         });
     } else {
-      console.log('SW registration bypassed in development/preview environment.');
+      console.log('SW registration bypassed in development/preview environment. Cleaning up active service workers to prevent cache conflicts...');
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        let unregisteredAny = false;
+        for (const registration of registrations) {
+          registration.unregister();
+          unregisteredAny = true;
+          console.log('Unregistered active service worker:', registration.scope);
+        }
+        if (unregisteredAny) {
+          console.log('Dev Service Worker cleaned up. Reloading to clear cache...');
+          setTimeout(() => {
+            location.reload();
+          }, 100);
+        }
+      });
     }
   });
 }

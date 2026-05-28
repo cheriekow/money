@@ -58,13 +58,24 @@ body {
 
 #floating-action-deck {
   position: fixed !important;
-  bottom: env(safe-area-inset-bottom, 0px) !important; /* 贴紧最底部（兼容全面屏安全区） */
-  left: 50% !important;
-  transform: translateX(-50%) !important; /* 恢复居中对齐 */
-  width: calc(100% - 2rem) !important; /* 保持两侧间距 */
-  max-width: 384px !important; /* 限制最大宽度，保持胶囊大小 */
-  border-radius: 9999px !important; /* 强力恢复原有的胶囊圆角 */
-  padding-bottom: 14px !important; /* 完美的内部底间距 */
+  bottom: env(safe-area-inset-bottom, 0px) !important; /* 手机端：完全贴靠最底部（自动支持刘海屏安全区） */
+  left: 0 !important;
+  right: 0 !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  transform: none !important; /* 强力禁用一切平移位移，彻底杜绝偏斜截断 */
+  width: calc(100% - 2rem) !important; /* 两侧自适应留白 */
+  max-width: 350px !important; /* 手机端精致紧凑的宽度 */
+  border-radius: 9999px !important; /* 完美的完全圆角胶囊造型 */
+  padding-bottom: 14px !important; /* 原汁原味精致底间距，防止图标太靠边 */
+  z-index: 50 !important; /* 保证绝对顶层 */
+}
+
+@media (min-width: 640px) {
+  #floating-action-deck {
+    max-width: 450px !important; /* 电脑端更大气、更宽敞的宽度 */
+    bottom: 0px !important; /* 电脑端完全贴靠最底部 */
+  }
 }
 
 /* Mobile full-height viewport fix */

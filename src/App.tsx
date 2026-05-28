@@ -1651,7 +1651,18 @@ export default function App() {
       </main>
 
       {/* FLOATING ACTION BOTTOM DOCK - GRACEFUL ON ALL DESKTOP / MOBILE LAYOUTS */}
-      <footer className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-sm bg-neutral-900 backdrop-blur-md rounded-full px-5 py-3.5 flex items-center justify-between shadow-2xl border border-white/10 select-none z-40" id="floating-action-deck">
+      <footer 
+        className="fixed bottom-0 left-0 right-0 mx-auto w-[calc(100%-2rem)] max-w-[350px] sm:max-w-[450px] bg-neutral-900/90 backdrop-blur-md rounded-full px-5 py-3.5 flex items-center justify-between shadow-2xl border border-white/10 select-none z-50" 
+        id="floating-action-deck"
+        style={{
+          position: 'fixed',
+          left: 0,
+          right: 0,
+          marginLeft: 'auto',
+          marginRight: 'auto',
+          transform: 'none',
+        }}
+      >
         
         {/* Left portions of actions (Tabs 0 and 1) */}
         <div className="flex items-center justify-around flex-1">
