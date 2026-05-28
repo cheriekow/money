@@ -57,7 +57,14 @@ body {
 }
 
 #floating-action-deck {
-  bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px)) !important;
+  position: fixed !important;
+  bottom: env(safe-area-inset-bottom, 0px) !important; /* 贴紧最底部（兼容全面屏安全区） */
+  left: 50% !important;
+  transform: translateX(-50%) !important; /* 恢复居中对齐 */
+  width: calc(100% - 2rem) !important; /* 保持两侧间距 */
+  max-width: 384px !important; /* 限制最大宽度，保持胶囊大小 */
+  border-radius: 9999px !important; /* 强力恢复原有的胶囊圆角 */
+  padding-bottom: 14px !important; /* 完美的内部底间距 */
 }
 
 /* Mobile full-height viewport fix */
