@@ -1523,7 +1523,7 @@ export default function App() {
                     <Icons.Palette size={14} />
                     选择个性化主题装扮
                   </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     {[
                       {
                         id: 'cream',
@@ -1545,6 +1545,27 @@ export default function App() {
                         desc: '自然静谧的舒适绿意',
                         colorPreview: 'bg-[#eff2eb] border-[#cbd5c5] text-[#1d251d]',
                         dotColors: ['#3e5c33', '#8f9e8a', '#e8a7b5']
+                      },
+                      {
+                        id: 'sakura',
+                        name: '樱花汽水 (清甜)',
+                        desc: '浪漫春樱与气泡清香',
+                        colorPreview: 'bg-[#fdf8f9] border-[#f3dadb] text-[#2e151b]',
+                        dotColors: ['#ffb7b2', '#ffccd5', '#ff9f1c']
+                      },
+                      {
+                        id: 'ocean',
+                        name: '冰酿海盐 (爽朗)',
+                        desc: '夏日海风与爽口泡沫',
+                        colorPreview: 'bg-[#f0f5fa] border-[#d4e0eb] text-[#122333]',
+                        dotColors: ['#90e0ef', '#bde0fe', '#3a86c8']
+                      },
+                      {
+                        id: 'citrus',
+                        name: '蜜橘气泡 (元气)',
+                        desc: '鲜活橘红与西柚橙黄',
+                        colorPreview: 'bg-[#fdfaf2] border-[#e9decb] text-[#332211]',
+                        dotColors: ['#ff9f1c', '#ffe5b4', '#e76f51']
                       }
                     ].map((t) => {
                       const isSelected = activeTheme === t.id;
@@ -2149,11 +2170,14 @@ export default function App() {
                     <Icons.Palette size={12} />
                     选择个性化主题装扮
                   </label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 gap-2">
                     {[
                       { id: 'cream', name: '温润奶香', previewColor: 'bg-[#f7f3e8]' },
                       { id: 'cyberpunk', name: '极客赛博', previewColor: 'bg-[#0b0c10]' },
-                      { id: 'matcha', name: '抹茶森林', previewColor: 'bg-[#eff2eb]' }
+                      { id: 'matcha', name: '抹茶森林', previewColor: 'bg-[#eff2eb]' },
+                      { id: 'sakura', name: '樱花汽水', previewColor: 'bg-[#fdf8f9]' },
+                      { id: 'ocean', name: '冰酿海盐', previewColor: 'bg-[#f0f5fa]' },
+                      { id: 'citrus', name: '蜜橘气泡', previewColor: 'bg-[#fdfaf2]' }
                     ].map((t) => {
                       const isSelected = activeTheme === t.id;
                       return (
