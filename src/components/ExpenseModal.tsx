@@ -6,7 +6,7 @@ import { CategoryInfo, CategoryType, Expense } from '../types';
 interface ExpenseModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddExpense: (expense: Omit<Expense, 'id'>) => void;
+  onAddExpense: (expense: Omit<Expense, 'id'>, isFixedExpenseRule?: boolean) => void;
   categories: Record<string, CategoryInfo>;
   onAddCategory: (category: CategoryInfo) => void;
   onDeleteCategory: (categoryName: string) => void;
@@ -51,6 +51,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
   const [date, setDate] = useState<string>('');
   const [note, setNote] = useState<string>('');
   const [errorMsg, setErrorMsg] = useState<string>('');
+  const [isFixedToggle, setIsFixedToggle] = useState<boolean>(false);
 
   // Custom Category State
   const [isAddingCustomCat, setIsAddingCustomCat] = useState(false);
@@ -80,6 +81,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
         
         setNote('');
       }
+      setIsFixedToggle(false);
       setErrorMsg('');
       setIsAddingCustomCat(false);
       setCustomCatName('');
@@ -119,7 +121,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
     if (editingExpense && onEditExpense) {
       onEditExpense(editingExpense.id, payload);
     } else {
-      onAddExpense(payload);
+      onAddExpense(payload, isFixedToggle);
     }
 
     onClose();
@@ -459,6 +461,35 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
               />
             </div>
           </div>
+
+          {/* Toggle fixed expense option */}
+          {!editingExpense && (
+            <div className="flex items-center justify-between p-3.5 bg-[var(--color-input-bg)] border border-[var(--color-card-border)] rounded-[22px] select-none animate-fade-in mt-1">
+              <div className="flex items-center gap-2.5 flex-1 pr-3">
+                <div className="w-8 h-8 rounded-full bg-[var(--color-accent)]/15 flex items-center justify-center text-[var(--color-text)] shrink-0">
+                  <Icons.CalendarClock size={14} />
+                </div>
+                <div className="text-left min-w-0">
+                  <p className="text-xs font-extrabold text-[var(--color-text)] truncate">设为每月固定开销</p>
+                  <p className="text-[9px] text-[var(--color-text-secondary)] truncate">自动在每月此号计入，省去重复记账</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsFixedToggle(!isFixedToggle)}
+                className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors cursor-pointer duration-200 shrink-0 ${
+                  isFixedToggle ? 'bg-[var(--color-btn-primary)] border border-transparent' : 'bg-neutral-200/50 border border-neutral-300'
+                }`}
+              >
+                <motion.div
+                  layout
+                  className="bg-white w-4 h-4 rounded-full shadow-sm"
+                  animate={{ x: isFixedToggle ? 18 : 0 }}
+                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                />
+              </button>
+            </div>
+          )}
 
           {/* Error feedback */}
           {errorMsg && (

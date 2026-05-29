@@ -53,3 +53,13 @@ export const DEFAULT_CATEGORIES: Record<string, CategoryInfo> = {
     iconName: 'Car',
   },
 };
+
+export interface FixedExpense {
+  id: string;
+  name: string;           // 规则名称 (如 "每月房租", "iCloud会员")
+  amount: number;         // 固定开销金额
+  category: CategoryType; // 消费类别 (如 "日常用品", "网购")
+  dayOfMonth: number;     // 每月几号生效 (1 至 31)
+  autoInclude: boolean;   // 是否自动计入当月账单
+  note?: string;          // 备注 (可选)
+}

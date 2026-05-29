@@ -1,14 +1,33 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import * as Icons from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { DEFAULT_CATEGORIES, CategoryInfo, CategoryType, Expense } from './types';
+import { DEFAULT_CATEGORIES, CategoryInfo, CategoryType, Expense, FixedExpense } from './types';
 import { INITIAL_EXPENSES } from './seedData';
 import { RingChart } from './components/RingChart';
 import { ExpenseModal } from './components/ExpenseModal';
+import { FixedExpenseModal } from './components/FixedExpenseModal';
 
 export default function App() {
   // --- STATE ---
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  
+  const [fixedExpenses, setFixedExpenses] = useState<FixedExpense[]>(() => {
+    const saved = localStorage.getItem('fixed_expenses');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Error parsing fixed_expenses:', e);
+      }
+    }
+    return [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('fixed_expenses', JSON.stringify(fixedExpenses));
+  }, [fixedExpenses]);
+
+  const [isFixedManagerOpen, setIsFixedManagerOpen] = useState(false);
   
   // Custom expandable Categories Map state
   const [categories, setCategories] = useState<Record<string, CategoryInfo>>(() => {
@@ -104,6 +123,20 @@ export default function App() {
       displayDateTitle: `${y}年${m}月`
     };
   }, [selectedYearMonth]);
+
+  const virtualFixedExpensesForThisMonth = useMemo(() => {
+    return fixedExpenses
+      .filter(fe => fe.autoInclude)
+      .map(fe => ({
+        id: `fixed-gen-${fe.id}-${currentMonthStr}`,
+        amount: fe.amount,
+        category: fe.category,
+        date: `${currentMonthStr}-${String(fe.dayOfMonth).padStart(2, '0')}`,
+        note: fe.note ? `${fe.name} (${fe.note})` : fe.name,
+        isFixed: true,
+        fixedId: fe.id
+      } as Expense & { isFixed: boolean; fixedId: string }));
+  }, [fixedExpenses, currentMonthStr]);
 
   // Sync Input and Budget Status
   useEffect(() => {
@@ -205,13 +238,18 @@ export default function App() {
 
   // --- METRICS CALCULATIONS ---
   const filteredByMonthExpenses = useMemo(() => {
-    return expenses.filter(e => {
+    const list = expenses.filter(e => {
       if (filterMonthOnly) {
         return e.date.startsWith(currentMonthStr);
       }
       return true;
     });
-  }, [expenses, currentMonthStr, filterMonthOnly]);
+    // Dynamically inject virtual fixed expenses into monthly calculations
+    if (filterMonthOnly) {
+      return [...list, ...virtualFixedExpensesForThisMonth];
+    }
+    return list;
+  }, [expenses, currentMonthStr, filterMonthOnly, virtualFixedExpensesForThisMonth]);
 
   // Total for current display (filtered by month/all)
   const displayTotal = useMemo(() => {
@@ -268,14 +306,60 @@ export default function App() {
   }, [expenses]);
 
   // --- ACTIONS ---
-  const handleAddExpense = (newExpense: Omit<Expense, 'id'>) => {
+  const handleAddExpense = (newExpense: Omit<Expense, 'id'>, isFixedExpenseRule?: boolean) => {
     const created: Expense = {
       ...newExpense,
       id: `exp-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
     };
     const updated = [created, ...expenses];
     saveExpenses(updated);
-    triggerFeedback(`已成功记账一套 ${currency}${newExpense.amount}!`, 'success');
+
+    if (isFixedExpenseRule) {
+      let dayVal = 1;
+      try {
+        const parts = newExpense.date.split('-');
+        if (parts.length === 3) {
+          dayVal = parseInt(parts[2], 10);
+        }
+      } catch (e) {
+        console.error('Error parsing day of month:', e);
+      }
+
+      const newRule: FixedExpense = {
+        id: `fixed-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+        name: newExpense.note || `${newExpense.category}固定开销`,
+        amount: newExpense.amount,
+        category: newExpense.category,
+        dayOfMonth: dayVal,
+        autoInclude: true,
+        note: newExpense.note
+      };
+
+      setFixedExpenses([newRule, ...fixedExpenses]);
+      triggerFeedback(`已成功记账，并自动创建了每月固定开销规则！`, 'success');
+    } else {
+      triggerFeedback(`已成功记账一套 ${currency}${newExpense.amount}!`, 'success');
+    }
+  };
+
+  const handleAddFixedRule = (rule: Omit<FixedExpense, 'id'>) => {
+    const id = `fixed-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`;
+    const ruleWithId: FixedExpense = { ...rule, id };
+    setFixedExpenses([ruleWithId, ...fixedExpenses]);
+    triggerFeedback(`固定开销规则【${rule.name}】创建成功！`, 'success');
+  };
+
+  const handleEditFixedRule = (id: string, updated: Omit<FixedExpense, 'id'>) => {
+    const updatedRules = fixedExpenses.map(r => r.id === id ? { ...updated, id } : r);
+    setFixedExpenses(updatedRules);
+    triggerFeedback(`规则【${updated.name}】已成功更新！`, 'success');
+  };
+
+  const handleClearFixedRule = (id: string) => {
+    const rule = fixedExpenses.find(r => r.id === id);
+    const name = rule ? rule.name : '';
+    setFixedExpenses(fixedExpenses.filter(r => r.id !== id));
+    triggerFeedback(`固定开销规则【${name}】已成功删除！`, 'info');
   };
 
   const handleDeleteExpense = (id: string, label: string) => {
@@ -738,6 +822,35 @@ export default function App() {
                   </div>
                 </div>
 
+                {/* 首页固定开销摘要卡片 (Dashboard Fixed Expenses summary widget) */}
+                <div 
+                  onClick={() => setIsFixedManagerOpen(true)}
+                  className="bg-white/85 border border-white/55 backdrop-blur-sm p-4.5 rounded-[28px] shadow-xs hover:border-[var(--color-accent)]/55 hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer flex items-center justify-between animate-fade-in"
+                  id="dashboard-fixed-expenses-banner"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-[var(--color-accent)]/15 flex items-center justify-center text-[var(--color-text)]">
+                      <Icons.CalendarClock size={18} className="animate-pulse" />
+                    </div>
+                    <div className="text-left">
+                      <span className="text-xs font-black text-[var(--color-text)] block">
+                        每月固定开销
+                      </span>
+                      <span className="text-[10px] text-[var(--color-text-secondary)] font-medium font-sans">
+                        共 {fixedExpenses.length} 项规则 · {fixedExpenses.filter(fe => fe.autoInclude).length} 项自动计入当月
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <span className="text-sm font-extrabold text-[var(--color-text)] block font-mono">
+                      {currency} {(fixedExpenses.filter(fe => fe.autoInclude).reduce((sum, fe) => sum + fe.amount, 0)).toFixed(2)}
+                    </span>
+                    <span className="text-[8px] text-[var(--color-text-secondary)]/70 font-semibold block flex items-center gap-0.5 justify-end">
+                      管理规则 <Icons.ChevronRight size={8} />
+                    </span>
+                  </div>
+                </div>
+
                 {/* Past Monthly History summation selector card */}
                 <div className="bg-white/80 border border-white/50 backdrop-blur-sm p-5 rounded-[28px] shadow-xs flex flex-col gap-3 select-none animate-fade-in" id="monthly-history-summary-card">
                   <div className="flex items-center justify-between">
@@ -945,7 +1058,7 @@ export default function App() {
                                 }}
                                 className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all border cursor-pointer ${
                                   isSelected
-                                    ? 'text-[var(--color-text)] font-black shadow-xs bg-[var(--color-card)]'
+                                    ? 'text-neutral-950 font-black shadow-xs bg-white'
                                     : 'bg-[var(--color-card)] text-[var(--color-text-secondary)] border-[var(--color-card-border)] hover:bg-[var(--color-input-bg)]'
                                 }`}
                                 style={isSelected ? { borderColor: catInfo.color, boxShadow: `0 2px 5px ${catInfo.color}40`, backgroundColor: `${catInfo.color}25` } : {}}
@@ -962,125 +1075,151 @@ export default function App() {
                       </div>
 
                       {/* Transactions display content */}
-                      <div className="space-y-3" id="ledger-items-list-container">
-                        {displayedHistoryList.length === 0 ? (
-                          <div className="text-center py-16 bg-neutral-50/50 border-2 border-dashed border-neutral-250 rounded-[28px] animate-fade-in pr-2 pl-2">
-                            <Icons.SearchX className="mx-auto text-neutral-400 mb-2" size={36} />
-                            <p className="text-xs font-extrabold text-neutral-500">
-                              {searchQuery.trim()
-                                ? `未找到匹配“${searchQuery}”的账目`
-                                : selectedCategory 
-                                ? `暂未在【${selectedCategory}】下录入花费纪录`
-                                : `${displayDateTitle}暂无记账数据`}
-                            </p>
-                            <p className="text-[10px] text-neutral-400 mt-1">您可以尝试更换搜索词或选择其他月份</p>
-                            
-                            {selectedCategory && (
-                              <button 
-                                onClick={() => setSelectedCategory(null)}
-                                className="mt-4 text-xs font-bold underline text-neutral-900 hover:text-black cursor-pointer inline-flex items-center gap-1"
-                              >
-                                <Icons.FilterX size={12} />
-                                清除分类筛选
-                              </button>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="space-y-3 pr-0.5">
-                            {displayedHistoryList.map((expense) => {
-                              const catInfo = categories[expense.category] || { name: expense.category, color: '#CCCCCC', bgColor: 'bg-neutral-200/30', iconName: 'Tag' };
-                              const IconComponent = (Icons as any)[catInfo.iconName] || Icons.Tag;
-                              
-                              // Compute dynamic proportional scale for progress bar inside cells
-                              const categorySum = categoryTotals[expense.category] || expense.amount;
-                              const propWidth = Math.max(12, Math.min(100, (expense.amount / categorySum) * 100));
+                      <div className="space-y-4">
+                        {/* FIXED EXPENSES GROUP */}
+                        {displayedHistoryList.filter(e => (e as any).isFixed).length > 0 && (
+                          <div className="space-y-2 text-left">
+                            <div className="flex items-center gap-1.5 ml-2 mb-1">
+                              <Icons.CalendarClock size={12} className="text-neutral-500" />
+                              <span className="text-[10px] font-black text-neutral-500 uppercase tracking-wider">📌 固定开销 (每月自动计入)</span>
+                            </div>
+                            <div className="bg-neutral-50/50 border border-dashed border-[var(--color-active-border)]/55 p-3 rounded-[28px] space-y-2">
+                              {displayedHistoryList.filter(e => (e as any).isFixed).map((expense) => {
+                                const catInfo = categories[expense.category] || { name: expense.category, color: '#CCCCCC', bgColor: 'bg-neutral-200/30', iconName: 'Tag' };
+                                const IconComponent = (Icons as any)[catInfo.iconName] || Icons.Tag;
+                                const categorySum = categoryTotals[expense.category] || expense.amount;
+                                const propWidth = Math.max(12, Math.min(100, (expense.amount / categorySum) * 100));
 
-                              return (
-                                <motion.div
-                                  key={expense.id}
-                                  layoutId={expense.id}
-                                  initial={{ opacity: 0, y: 10 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  exit={{ opacity: 0, scale: 0.95 }}
-                                  className="group flex items-center justify-between bg-[var(--color-card)] border border-[var(--color-card-border)] rounded-[22px] p-4 transition-all duration-200 hover:border-[var(--color-accent)]/50 hover:shadow-xs relative"
-                                >
-                                  {/* LEFT CATEGORY ICON */}
-                                  <div className="flex items-center space-x-3.5 flex-1 min-w-0">
-                                    <div 
-                                      className="w-11 h-11 rounded-full flex items-center justify-center border border-[var(--color-card-border)] shadow-xs shrink-0 select-none transition-transform group-hover:scale-105"
-                                      style={{ backgroundColor: catInfo.color, color: '#1a1a1a' }}
-                                    >
-                                      <IconComponent size={18} strokeWidth={2.5} />
-                                    </div>
-
-                                    {/* NOTE & SPENDING BAR */}
-                                    <div className="flex-1 min-w-0 pr-3">
-                                      <div className="flex items-baseline space-x-2">
-                                        <span className="text-sm font-extrabold text-[var(--color-text)] select-all">{expense.category}</span>
-                                        {expense.note && (
-                                          <span className="text-[10px] sm:text-xs text-[var(--color-text-secondary)] max-w-[90px] min-[360px]:max-w-[130px] min-[400px]:max-w-[160px] sm:max-w-[220px] truncate select-all font-medium font-sans inline-block align-middle ml-1">
-                                            {expense.note}
-                                          </span>
-                                        )}
+                                return (
+                                  <motion.div
+                                    key={expense.id}
+                                    layoutId={expense.id}
+                                    className="group flex items-center justify-between bg-white border border-[var(--color-card-border)] rounded-[22px] p-3.5 transition-all duration-200 relative overflow-hidden animate-fade-in"
+                                  >
+                                    <div className="flex items-center space-x-3.5 flex-1 min-w-0">
+                                      <div 
+                                        className="w-9 h-9 rounded-full flex items-center justify-center border border-neutral-200/50 shadow-xs shrink-0 select-none"
+                                        style={{ backgroundColor: catInfo.color, color: '#1a1a1a' }}
+                                      >
+                                        <IconComponent size={14} strokeWidth={2.5} />
                                       </div>
-
-                                      {/* Proportional visual filled progress bar details */}
-                                      <div className="flex items-center space-x-2 mt-1.5">
-                                        <div className="w-full h-2 bg-[var(--color-input-bg)] border border-[var(--color-card-border)]/50 rounded-full overflow-hidden relative">
-                                          <div 
-                                            className="h-full rounded-full transition-all duration-500 ease-out"
-                                            style={{ 
-                                              width: `${propWidth}%`,
-                                              backgroundColor: catInfo.color
-                                            }}
-                                          />
+                                      <div className="flex-1 min-w-0 pr-2 text-left">
+                                        <div className="flex items-baseline space-x-1.5">
+                                          <span className="text-xs font-extrabold text-neutral-900">{expense.category}</span>
+                                          {expense.note && (
+                                            <span className="text-[10px] text-neutral-500 truncate max-w-[120px] font-medium font-sans">
+                                              {expense.note}
+                                            </span>
+                                          )}
                                         </div>
-                                        <span className="text-[8px] font-mono font-bold text-[var(--color-text-tertiary)] shrink-0">
-                                          {propWidth.toFixed(0)}%
+                                        <p className="text-[8px] text-neutral-400 font-semibold font-mono mt-0.5">自动固定账单</p>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center space-x-2 shrink-0 font-sans pl-1 select-none">
+                                      <div className="text-right">
+                                        <span className="text-xs font-black text-neutral-900 block tracking-tight font-sans">
+                                          {currency} {expense.amount.toFixed(2)}
+                                        </span>
+                                        <span className="text-[8px] text-neutral-400 font-mono block">
+                                          {expense.date}
                                         </span>
                                       </div>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setIsFixedManagerOpen(true);
+                                          triggerFeedback('已为您开启固定开销管理中心，可在此修改或停用规则！', 'info');
+                                        }}
+                                        title="管理固定开销规则"
+                                        className="p-1.5 bg-neutral-100 border border-neutral-200 text-[var(--color-btn-primary)] hover:text-black rounded-full transition-all cursor-pointer active:scale-[0.9]"
+                                      >
+                                        <Icons.Sliders size={11} strokeWidth={2.5} />
+                                      </button>
                                     </div>
-                                  </div>
-
-                                  {/* VALUE & DELETE COMMAND */}
-                                  <div className="flex items-center space-x-3 shrink-0 pl-1 select-none font-sans">
-                                    <div className="text-right">
-                                      <span className="text-base font-extrabold text-[var(--color-text)] block tracking-tight">
-                                        {currency} {expense.amount.toFixed(2)}
-                                      </span>
-                                      <span className="text-[10px] text-[var(--color-text-secondary)]/70 font-mono block">
-                                        {expense.date}
-                                      </span>
-                                    </div>
-
-                                    {/* Edit Action */}
-                                    <button
-                                      id={`edit-btn-${expense.id}`}
-                                      onClick={() => {
-                                        setEditingExpense(expense);
-                                        setIsModalOpen(true);
-                                      }}
-                                      title="编辑此笔消费"
-                                      className="p-2 bg-[var(--color-input-bg)] border border-[var(--color-input-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text)] hover:bg-[var(--color-card-solid)] rounded-full transition-all cursor-pointer active:scale-[0.9]"
-                                    >
-                                      <Icons.Edit2 size={13} strokeWidth={2.5} />
-                                    </button>
-
-                                    {/* Trash Delete Action */}
-                                    <button
-                                      id={`delete-btn-${expense.id}`}
-                                      onClick={() => handleDeleteExpense(expense.id, `${expense.category}: ¥${expense.amount}`)}
-                                      title="删除此笔消费"
-                                      className="p-2 bg-[var(--color-input-bg)] border border-[var(--color-input-border)] text-[var(--color-text-secondary)] hover:text-red-500 hover:bg-[var(--color-card-solid)] rounded-full transition-all cursor-pointer active:scale-[0.9]"
-                                    >
-                                      <Icons.Trash2 size={13} strokeWidth={2.5} />
-                                    </button>
-                                  </div>
-                                </motion.div>
-                              );
-                            })}
+                                  </motion.div>
+                                );
+                              })}
+                            </div>
                           </div>
                         )}
+
+                        {/* REGULAR EXPENSES GROUP */}
+                        <div className="space-y-2 text-left">
+                          {displayedHistoryList.filter(e => !(e as any).isFixed).length > 0 && displayedHistoryList.filter(e => (e as any).isFixed).length > 0 && (
+                            <div className="flex items-center gap-1.5 ml-2 mb-1 pt-1">
+                              <Icons.Receipt size={12} className="text-neutral-500" />
+                              <span className="text-[10px] font-black text-neutral-500 uppercase tracking-wider">🛍️ 普通消费明细 (单次支出)</span>
+                            </div>
+                          )}
+                          {displayedHistoryList.filter(e => !(e as any).isFixed).map((expense) => {
+                            const catInfo = categories[expense.category] || { name: expense.category, color: '#CCCCCC', bgColor: 'bg-neutral-200/30', iconName: 'Tag' };
+                            const IconComponent = (Icons as any)[catInfo.iconName] || Icons.Tag;
+                            const categorySum = categoryTotals[expense.category] || expense.amount;
+                            const propWidth = Math.max(12, Math.min(100, (expense.amount / categorySum) * 100));
+
+                            return (
+                              <motion.div
+                                key={expense.id}
+                                layoutId={expense.id}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                className="group flex items-center justify-between bg-white border border-[var(--color-card-border)] rounded-[22px] p-4 transition-all duration-200 hover:border-neutral-900/40 hover:shadow-xs relative"
+                              >
+                                <div className="flex items-center space-x-3.5 flex-1 min-w-0">
+                                  <div 
+                                    className="w-11 h-11 rounded-full flex items-center justify-center border border-neutral-200/50 shadow-xs shrink-0 select-none transition-transform group-hover:scale-105"
+                                    style={{ backgroundColor: catInfo.color, color: '#1a1a1a' }}
+                                  >
+                                    <IconComponent size={18} strokeWidth={2.5} />
+                                  </div>
+
+                                  <div className="flex-1 min-w-0 pr-3">
+                                    <div className="flex items-baseline space-x-2">
+                                      <span className="text-sm font-extrabold text-neutral-900">{expense.category}</span>
+                                      {expense.note && (
+                                        <span className="text-xs text-neutral-500 truncate max-w-[150px] font-medium font-sans">
+                                          {expense.note}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center space-x-2 mt-1.5">
+                                      <div className="w-full h-2 bg-neutral-100 rounded-full overflow-hidden relative">
+                                        <div 
+                                          className="h-full rounded-full transition-all duration-500 ease-out"
+                                          style={{ width: `${propWidth}%`, backgroundColor: catInfo.color }}
+                                        />
+                                      </div>
+                                      <span className="text-[8px] font-mono font-bold text-neutral-400">
+                                        {propWidth.toFixed(0)}%
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center space-x-3 shrink-0 pl-1 select-none font-sans">
+                                  <div className="text-right">
+                                    <span className="text-base font-extrabold text-neutral-900 block tracking-tight font-sans">
+                                      {currency} {expense.amount.toFixed(2)}
+                                    </span>
+                                    <span className="text-[10px] text-neutral-400 font-mono block">
+                                      {expense.date}
+                                    </span>
+                                  </div>
+
+                                  <button
+                                    id={`delete-btn-${expense.id}`}
+                                    onClick={() => handleDeleteExpense(expense.id, `${expense.category}: ¥${expense.amount}`)}
+                                    title="删除此笔消费"
+                                    className="p-2 bg-neutral-50 text-neutral-400 hover:text-white hover:bg-neutral-900 rounded-full transition-colors cursor-pointer"
+                                  >
+                                    <Icons.Trash2 size={13} strokeWidth={2.5} />
+                                  </button>
+                                </div>
+                              </motion.div>
+                            );
+                          })}
+                        </div>
                       </div>
                     </>
                   ) : null}
@@ -1686,6 +1825,29 @@ export default function App() {
                   </p>
                 </div>
 
+                {/* 固定开销管理规则 (Fixed Expense rules config widget in settings) */}
+                <div className="border-t border-neutral-100 pt-5 animate-fade-in">
+                  <h3 className="text-xs font-black uppercase text-neutral-500 tracking-wider flex items-center gap-2 mb-3">
+                    <Icons.CalendarClock size={14} />
+                    固定开销规则管理
+                  </h3>
+                  <div className="bg-[var(--color-input-bg)]/30 border border-[var(--color-card-border)] p-4 rounded-[28px] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5 select-none">
+                    <div className="text-left">
+                      <p className="text-xs font-extrabold text-[var(--color-text)]">固定开销管理中心</p>
+                      <p className="text-[10px] text-[var(--color-text-secondary)] mt-1 font-medium font-sans">
+                        目前已设定 {fixedExpenses.length} 条每月自动记账的固定开销规则
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsFixedManagerOpen(true)}
+                      className="bg-[var(--color-btn-primary)] hover:bg-black text-[var(--color-btn-primary-text)] text-xs font-black px-5 py-3 rounded-full cursor-pointer transition-all active:scale-[0.98] w-full sm:w-auto text-center shrink-0 shadow-xs"
+                    >
+                      进入固定开销管理
+                    </button>
+                  </div>
+                </div>
+
                 {/* 4. Data Backup & Recovery region */}
                 <div className="border-t border-neutral-100 pt-5 bg-[#BFDBFE]/10 p-4 rounded-3xl border border-[#BFDBFE]/20 mb-5">
                   <h3 className="text-xs font-black uppercase text-blue-800 tracking-wider flex items-center gap-2 mb-3">
@@ -1994,6 +2156,22 @@ export default function App() {
             currency={currency}
             editingExpense={editingExpense}
             onEditExpense={handleEditExpense}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* FIXED EXPENSES RULES MANAGEMENT MODAL */}
+      <AnimatePresence>
+        {isFixedManagerOpen && (
+          <FixedExpenseModal
+            isOpen={isFixedManagerOpen}
+            onClose={() => setIsFixedManagerOpen(false)}
+            fixedExpenses={fixedExpenses}
+            onAddRule={handleAddFixedRule}
+            onEditRule={handleEditFixedRule}
+            onDeleteRule={handleClearFixedRule}
+            categories={categories}
+            currency={currency}
           />
         )}
       </AnimatePresence>
