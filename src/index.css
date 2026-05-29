@@ -86,4 +86,207 @@ body {
   }
 }
 
+/* ==========================================
+   个性化主题系统 (Personalized Theme System)
+   ========================================== */
+
+/* --- 1. 默认主题：温润奶香 (Creamy Pastel - Default) --- */
+:root, [data-theme="cream"] {
+  --color-bg: #f7f3e8;
+  --color-text: #1a1a1a;
+  --color-text-secondary: #525252;
+  --color-text-tertiary: #a3a3a3;
+  
+  --color-card: rgba(255, 255, 255, 0.8);
+  --color-card-solid: #ffffff;
+  --color-card-border: rgba(255, 255, 255, 0.5);
+  
+  --color-input-bg: rgba(255, 255, 255, 0.7);
+  --color-input-border: #e5e5e5;
+  
+  --color-btn-primary: #1a1a1a;
+  --color-btn-primary-hover: #000000;
+  --color-btn-primary-text: #ffffff;
+}
+
+/* --- 2. 极客赛博 (Cyberpunk Dark Mode) --- */
+[data-theme="cyberpunk"] {
+  --color-bg: #0b0c10;
+  --color-text: #f5f6f8;
+  --color-text-secondary: #94a3b8;
+  --color-text-tertiary: #64748b;
+  
+  --color-card: rgba(22, 27, 34, 0.85);
+  --color-card-solid: #161b22;
+  --color-card-border: rgba(56, 189, 248, 0.2); /* 霓虹青边缘 */
+  
+  --color-input-bg: rgba(15, 23, 42, 0.6);
+  --color-input-border: #334155;
+  
+  --color-btn-primary: #38bdf8; /* 极客青 */
+  --color-btn-primary-hover: #0ea5e9;
+  --color-btn-primary-text: #0b0c10;
+}
+
+/* --- 3. 抹茶森林 (Matcha Forest - Recommended) --- */
+[data-theme="matcha"] {
+  --color-bg: #eff2eb; /* 抹茶乳白 */
+  --color-text: #1d251d; /* 森林深绿 */
+  --color-text-secondary: #586953;
+  --color-text-tertiary: #8f9e8a;
+  
+  --color-card: rgba(255, 255, 255, 0.85);
+  --color-card-solid: #ffffff;
+  --color-card-border: rgba(143, 161, 137, 0.35);
+  
+  --color-input-bg: rgba(255, 255, 255, 0.75);
+  --color-input-border: #cbd5c5;
+  
+  --color-btn-primary: #3e5c33; /* 抹茶绿 */
+  --color-btn-primary-hover: #2d4525;
+  --color-btn-primary-text: #eff2eb;
+}
+
+/* ==========================================
+   Tailwind 类全局向下兼容自动映射 (Non-Default Themes)
+   ========================================== */
+
+/* --- A. 极客赛博主题映射 --- */
+[data-theme="cyberpunk"] .bg-white,
+[data-theme="cyberpunk"] .bg-white\/80,
+[data-theme="cyberpunk"] .bg-white\/60,
+[data-theme="cyberpunk"] .bg-white\/30 {
+  background-color: var(--color-card) !important;
+  color: var(--color-text) !important;
+}
+
+[data-theme="cyberpunk"] .bg-neutral-50,
+[data-theme="cyberpunk"] .bg-neutral-50\/50,
+[data-theme="cyberpunk"] .bg-neutral-50\/70,
+[data-theme="cyberpunk"] .bg-neutral-100,
+[data-theme="cyberpunk"] .bg-[#BFDBFE]\/10 {
+  background-color: var(--color-input-bg) !important;
+}
+
+[data-theme="cyberpunk"] .text-neutral-900,
+[data-theme="cyberpunk"] .text-neutral-955,
+[data-theme="cyberpunk"] .text-neutral-850,
+[data-theme="cyberpunk"] .text-neutral-800,
+[data-theme="cyberpunk"] .text-neutral-700,
+[data-theme="cyberpunk"] .text-neutral-750 {
+  color: var(--color-text) !important;
+}
+
+[data-theme="cyberpunk"] .text-neutral-600,
+[data-theme="cyberpunk"] .text-neutral-500,
+[data-theme="cyberpunk"] .text-neutral-400 {
+  color: var(--color-text-secondary) !important;
+}
+
+[data-theme="cyberpunk"] .border-neutral-200,
+[data-theme="cyberpunk"] .border-neutral-205,
+[data-theme="cyberpunk"] .border-neutral-250,
+[data-theme="cyberpunk"] .border-neutral-300,
+[data-theme="cyberpunk"] .border-neutral-100,
+[data-theme="cyberpunk"] .border-white\/50 {
+  border-color: var(--color-card-border) !important;
+}
+
+[data-theme="cyberpunk"] .bg-neutral-950,
+[data-theme="cyberpunk"] .bg-neutral-900,
+[data-theme="cyberpunk"] .bg-black {
+  background-color: var(--color-btn-primary) !important;
+  color: var(--color-btn-primary-text) !important;
+}
+
+[data-theme="cyberpunk"] .hover\:bg-black:hover,
+[data-theme="cyberpunk"] .hover\:bg-neutral-800:hover,
+[data-theme="cyberpunk"] .hover\:bg-neutral-900:hover {
+  background-color: var(--color-btn-primary-hover) !important;
+}
+
+[data-theme="cyberpunk"] .border-black,
+[data-theme="cyberpunk"] .border-neutral-900 {
+  border-color: var(--color-btn-primary) !important;
+}
+
+/* 针对赛博朋克输入框的特别处理 */
+[data-theme="cyberpunk"] input,
+[data-theme="cyberpunk"] select,
+[data-theme="cyberpunk"] textarea {
+  background-color: var(--color-input-bg) !important;
+  border-color: var(--color-input-border) !important;
+  color: var(--color-text) !important;
+}
+
+
+/* --- B. 抹茶森林主题映射 --- */
+[data-theme="matcha"] .bg-white,
+[data-theme="matcha"] .bg-white\/80,
+[data-theme="matcha"] .bg-white\/60,
+[data-theme="matcha"] .bg-white\/30 {
+  background-color: var(--color-card) !important;
+  color: var(--color-text) !important;
+}
+
+[data-theme="matcha"] .bg-neutral-50,
+[data-theme="matcha"] .bg-neutral-50\/50,
+[data-theme="matcha"] .bg-neutral-50\/70,
+[data-theme="matcha"] .bg-neutral-100,
+[data-theme="matcha"] .bg-[#BFDBFE]\/10 {
+  background-color: var(--color-input-bg) !important;
+}
+
+[data-theme="matcha"] .text-neutral-900,
+[data-theme="matcha"] .text-neutral-955,
+[data-theme="matcha"] .text-neutral-850,
+[data-theme="matcha"] .text-neutral-800,
+[data-theme="matcha"] .text-neutral-700,
+[data-theme="matcha"] .text-neutral-750 {
+  color: var(--color-text) !important;
+}
+
+[data-theme="matcha"] .text-neutral-600,
+[data-theme="matcha"] .text-neutral-500,
+[data-theme="matcha"] .text-neutral-400 {
+  color: var(--color-text-secondary) !important;
+}
+
+[data-theme="matcha"] .border-neutral-200,
+[data-theme="matcha"] .border-neutral-205,
+[data-theme="matcha"] .border-neutral-250,
+[data-theme="matcha"] .border-neutral-300,
+[data-theme="matcha"] .border-neutral-100,
+[data-theme="matcha"] .border-white\/50 {
+  border-color: var(--color-card-border) !important;
+}
+
+[data-theme="matcha"] .bg-neutral-950,
+[data-theme="matcha"] .bg-neutral-900,
+[data-theme="matcha"] .bg-black {
+  background-color: var(--color-btn-primary) !important;
+  color: var(--color-btn-primary-text) !important;
+}
+
+[data-theme="matcha"] .hover\:bg-black:hover,
+[data-theme="matcha"] .hover\:bg-neutral-800:hover,
+[data-theme="matcha"] .hover\:bg-neutral-900:hover {
+  background-color: var(--color-btn-primary-hover) !important;
+}
+
+[data-theme="matcha"] .border-black,
+[data-theme="matcha"] .border-neutral-900 {
+  border-color: var(--color-btn-primary) !important;
+}
+
+/* 针对抹茶森林输入框的特别处理 */
+[data-theme="matcha"] input,
+[data-theme="matcha"] select,
+[data-theme="matcha"] textarea {
+  background-color: var(--color-input-bg) !important;
+  border-color: var(--color-input-border) !important;
+  color: var(--color-text) !important;
+}
+
+
 

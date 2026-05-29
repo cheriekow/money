@@ -62,6 +62,17 @@ export default function App() {
   });
   const [isSettingOpen, setIsSettingOpen] = useState(false);
 
+  // --- Active Switchable Theme State ---
+  const [activeTheme, setActiveTheme] = useState<string>(() => {
+    const saved = localStorage.getItem('activeTheme');
+    return saved || 'cream';
+  });
+
+  // Enforce document element data-theme attribute on mount or change
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', activeTheme);
+  }, [activeTheme]);
+
   // Collapsible ledger details list state
   const [isLedgerExpanded, setIsLedgerExpanded] = useState<boolean>(() => {
     const saved = localStorage.getItem('isLedgerExpanded');
@@ -432,7 +443,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f7f3e8] text-neutral-900 flex flex-col font-sans select-none antialiased relative pb-28 md:pb-12" id="app-root-view">
+    <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text)] flex flex-col font-sans select-none antialiased relative pb-28 md:pb-12" id="app-root-view">
       
       {/* GLOBAL HEADER BAR */}
       <header className="border-b border-black/5 bg-white/40 backdrop-blur-md sticky top-0 z-40 select-none animate-fade-in" id="app-global-header">
@@ -1506,7 +1517,79 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* 2. Monthly Budget limits */}
+                {/* 2. 个性化主题装扮 (Theme customization) */}
+                <div className="border-t border-neutral-100 pt-5">
+                  <h3 className="text-xs font-black uppercase text-neutral-500 tracking-wider flex items-center gap-2 mb-3">
+                    <Icons.Palette size={14} />
+                    选择个性化主题装扮
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {[
+                      {
+                        id: 'cream',
+                        name: '温润奶香 (经典)',
+                        desc: '温馨舒适的柔和色调',
+                        colorPreview: 'bg-[#f7f3e8] border-[#cbd5c5] text-[#1a1a1a]',
+                        dotColors: ['#fbc4d0', '#fcd581', '#90be6d']
+                      },
+                      {
+                        id: 'cyberpunk',
+                        name: '极客赛博 (酷炫)',
+                        desc: '科技感十足的暗夜霓虹',
+                        colorPreview: 'bg-[#0b0c10] border-[#38bdf8] text-[#f5f6f8]',
+                        dotColors: ['#f43f5e', '#38bdf8', '#39ff14']
+                      },
+                      {
+                        id: 'matcha',
+                        name: '抹茶森林 (护眼)',
+                        desc: '自然静谧的舒适绿意',
+                        colorPreview: 'bg-[#eff2eb] border-[#cbd5c5] text-[#1d251d]',
+                        dotColors: ['#3e5c33', '#8f9e8a', '#e8a7b5']
+                      }
+                    ].map((t) => {
+                      const isSelected = activeTheme === t.id;
+                      return (
+                        <button
+                          key={t.id}
+                          type="button"
+                          onClick={() => {
+                            setActiveTheme(t.id);
+                            localStorage.setItem('activeTheme', t.id);
+                            document.documentElement.setAttribute('data-theme', t.id);
+                            triggerFeedback(`已成功切换至【${t.name}】主题！`, 'success');
+                          }}
+                          className={`flex flex-col items-start p-3.5 rounded-2xl border-2 transition-all cursor-pointer text-left ${
+                            isSelected
+                              ? 'border-black bg-black text-white shadow-md'
+                              : 'border-neutral-200 bg-white text-neutral-700 hover:border-neutral-350 hover:bg-neutral-50'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between w-full">
+                            <span className="text-xs font-black">{t.name}</span>
+                            <div className="flex gap-0.5">
+                              {t.dotColors.map((c, i) => (
+                                <span key={i} className="w-2 h-2 rounded-full border border-white/20" style={{ backgroundColor: c }} />
+                              ))}
+                            </div>
+                          </div>
+                          
+                          <p className={`text-[9px] mt-1 font-medium ${isSelected ? 'text-neutral-300' : 'text-neutral-400'}`}>
+                            {t.desc}
+                          </p>
+
+                          {/* Soft visual preview frame inside the card */}
+                          <div className={`mt-2.5 w-full h-8 rounded-lg border flex items-center justify-around text-[8px] font-bold ${t.colorPreview}`}>
+                            <span>图标</span>
+                            <span className="w-3.5 h-3.5 rounded-full" style={{ backgroundColor: t.dotColors[0] }} />
+                            <span>￥120</span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 3. Monthly Budget limits */}
                 <div className="border-t border-neutral-100 pt-5">
                   <h3 className="text-xs font-black uppercase text-neutral-500 tracking-wider flex items-center gap-2 mb-3">
                     <Icons.Sliders size={14} />
@@ -1769,7 +1852,7 @@ export default function App() {
               animate={{ y: 0, scale: 1 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-              className="relative w-full max-w-md bg-[#f7f3e8] border-t-4 border-black sm:border-4 sm:rounded-[36px] rounded-t-[36px] p-6 shadow-2xl z-10 overflow-y-auto max-h-[92vh] sm:max-h-[90vh] flex flex-col justify-between"
+              className="relative w-full max-w-md bg-[var(--color-bg)] border-t-4 border-black sm:border-4 sm:rounded-[36px] rounded-t-[36px] p-6 shadow-2xl z-10 overflow-y-auto max-h-[92vh] sm:max-h-[90vh] flex flex-col justify-between"
               id="install-modal-card"
             >
               {/* Drag bar for mobile */}
@@ -1909,7 +1992,7 @@ export default function App() {
               animate={{ y: 0, scale: 1 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-              className="relative w-full max-w-md bg-[#f7f3e8] border-t-4 border-black sm:border-4 sm:rounded-[36px] rounded-t-[36px] p-6 shadow-2xl z-10 overflow-hidden flex flex-col justify-between"
+              className="relative w-full max-w-md bg-[var(--color-bg)] border-t-4 border-black sm:border-4 sm:rounded-[36px] rounded-t-[36px] p-6 shadow-2xl z-10 overflow-hidden flex flex-col justify-between"
               id="reset-modal-card"
             >
               {/* Top Handle Decorator for Mobile Drag Handles */}
@@ -1996,7 +2079,7 @@ export default function App() {
               animate={{ y: 0, scale: 1 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-              className="relative w-full max-w-md bg-[#f7f3e8] border-t-4 border-black sm:border-4 sm:rounded-[36px] rounded-t-[36px] p-6 shadow-2xl z-10 overflow-hidden flex flex-col justify-between"
+              className="relative w-full max-w-md bg-[var(--color-bg)] border-t-4 border-black sm:border-4 sm:rounded-[36px] rounded-t-[36px] p-6 shadow-2xl z-10 overflow-hidden flex flex-col justify-between"
               id="setting-modal-card"
             >
               {/* Top Handle Drag-Bar decorator */}
@@ -2049,6 +2132,43 @@ export default function App() {
                           <span className={`text-[8px] font-medium leading-none mt-0.5 ${isSelected ? 'text-neutral-300' : 'text-neutral-400'}`}>
                             {cur.detail}
                           </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Quick Theme selection in Settings Modal */}
+                <div className="border-t border-neutral-100 pt-4">
+                  <label className="text-[10px] font-black uppercase text-neutral-500 tracking-wider flex items-center gap-1.5 mb-2">
+                    <Icons.Palette size={12} />
+                    选择个性化主题装扮
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { id: 'cream', name: '温润奶香', previewColor: 'bg-[#f7f3e8]' },
+                      { id: 'cyberpunk', name: '极客赛博', previewColor: 'bg-[#0b0c10]' },
+                      { id: 'matcha', name: '抹茶森林', previewColor: 'bg-[#eff2eb]' }
+                    ].map((t) => {
+                      const isSelected = activeTheme === t.id;
+                      return (
+                        <button
+                          key={t.id}
+                          type="button"
+                          onClick={() => {
+                            setActiveTheme(t.id);
+                            localStorage.setItem('activeTheme', t.id);
+                            document.documentElement.setAttribute('data-theme', t.id);
+                            triggerFeedback(`已成功切换至【${t.name}】主题！`, 'success');
+                          }}
+                          className={`flex items-center gap-1.5 p-2 rounded-xl border transition-all cursor-pointer text-left ${
+                            isSelected
+                              ? 'border-black bg-black text-white shadow-xs'
+                              : 'border-neutral-200 bg-white text-neutral-700 hover:border-neutral-350 hover:bg-white/50'
+                          }`}
+                        >
+                          <span className={`w-3.5 h-3.5 rounded-full border border-neutral-300 flex-shrink-0 ${t.previewColor}`} />
+                          <span className="text-[10px] font-black leading-none">{t.name}</span>
                         </button>
                       );
                     })}
