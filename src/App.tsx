@@ -755,7 +755,7 @@ export default function App() {
                       <span className="text-[10px] text-neutral-400 font-bold">暂无往期月度汇总</span>
                     </div>
                   ) : (
-                    <div className="flex gap-2 pb-1 overflow-x-auto scrollbar-thin scrollbar-thumb-black/10 text-neutral-900 scroll-smooth" id="monthly-summary-scroll">
+                    <div className="flex gap-2 py-2 px-1.5 overflow-x-auto scrollbar-thin scrollbar-thumb-black/10 text-neutral-900 scroll-smooth" id="monthly-summary-scroll">
                       {monthlySummaries.map(({ yearMonth, total, label, yearLabel }) => {
                         const isActive = selectedYearMonth === yearMonth;
                         return (

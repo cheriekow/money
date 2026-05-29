@@ -231,7 +231,7 @@ body {
   --color-accent: #90e0ef; /* 冰蓝高亮 */
   --color-accent-text: #122333;
 
-  --color-active-badge-bg: rgba(18, 35, 51, 0.08);
+  --color-active-badge-bg: rgba(255, 255, 255, 0.25); /* 提升亮色背景卡片上的对比度，呈精美气泡感 */
   --color-active-badge-text: #122333;
 
   --color-card-dark: #bde0fe; /* 浅海蓝，形成双色清新呼应 */
@@ -261,8 +261,8 @@ body {
   --color-accent: #ebdccb; /* 舒缓温润的燕麦卡其金 */
   --color-accent-text: #3e332b;
 
-  --color-active-badge-bg: rgba(140, 123, 108, 0.12);
-  --color-active-badge-text: #8c7b6c;
+  --color-active-badge-bg: rgba(255, 255, 255, 0.25); /* 提升对比度，白气泡背景 */
+  --color-active-badge-text: #3e332b; /* 深焦糖字 */
 
   --color-card-dark: #ebdccb; /* 温暖燕麦呼应色 */
   --color-card-dark-text: #3e332b;
