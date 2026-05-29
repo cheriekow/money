@@ -3,6 +3,26 @@ import { motion, AnimatePresence } from 'motion/react';
 import * as Icons from 'lucide-react';
 import { CategoryInfo, CategoryType, FixedExpense } from '../types';
 
+const PRESET_COLORS = [
+  { name: '粉桃', hex: '#FBCFE8', bg: 'bg-[#FBCFE8]/30' },
+  { name: '杏黄', hex: '#FDE68A', bg: 'bg-[#FDE68A]/30' },
+  { name: '天蓝', hex: '#BFDBFE', bg: 'bg-[#BFDBFE]/30' },
+  { name: '薄荷', hex: '#A7F3D0', bg: 'bg-[#A7F3D0]/30' },
+  { name: '蜜桔', hex: '#FED7AA', bg: 'bg-[#FED7AA]/30' },
+  { name: '紫罗兰', hex: '#DDD6FE', bg: 'bg-[#DDD6FE]/30' },
+];
+
+const PRESET_ICONS = [
+  { iconName: 'Heart', label: '健康' },
+  { iconName: 'Coffee', label: '咖啡' },
+  { iconName: 'Gamepad2', label: '游玩' },
+  { iconName: 'Sparkles', label: '护肤' },
+  { iconName: 'Gift', label: '礼物' },
+  { iconName: 'Clapperboard', label: '电影' },
+  { iconName: 'GraduationCap', label: '成长' },
+  { iconName: 'ShoppingBag', label: '网购' },
+];
+
 interface FixedExpenseModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -11,6 +31,8 @@ interface FixedExpenseModalProps {
   onEditRule: (id: string, rule: Omit<FixedExpense, 'id'>) => void;
   onDeleteRule: (id: string) => void;
   categories: Record<string, CategoryInfo>;
+  onAddCategory?: (cat: CategoryInfo) => void;
+  onDeleteCategory?: (catName: string) => void;
   currency: string;
 }
 
@@ -22,6 +44,8 @@ export const FixedExpenseModal: React.FC<FixedExpenseModalProps> = ({
   onEditRule,
   onDeleteRule,
   categories,
+  onAddCategory,
+  onDeleteCategory,
   currency,
 }) => {
   // Modal Panels state: 'list' | 'form'
@@ -36,6 +60,13 @@ export const FixedExpenseModal: React.FC<FixedExpenseModalProps> = ({
   const [autoInclude, setAutoInclude] = useState(true);
   const [note, setNote] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [isDeleteMode, setIsDeleteMode] = useState(false);
+
+  // Custom category creation state
+  const [isAddingCustomCat, setIsAddingCustomCat] = useState(false);
+  const [customCatName, setCustomCatName] = useState('');
+  const [selectedColor, setSelectedColor] = useState(PRESET_COLORS[0]);
+  const [selectedIcon, setSelectedIcon] = useState(PRESET_ICONS[0].iconName);
 
   // Reset when modal opens/closes
   useEffect(() => {
@@ -43,6 +74,11 @@ export const FixedExpenseModal: React.FC<FixedExpenseModalProps> = ({
       setPanel('list');
       setEditingRule(null);
       setErrorMsg('');
+      setIsDeleteMode(false);
+      setIsAddingCustomCat(false);
+      setCustomCatName('');
+      setSelectedColor(PRESET_COLORS[0]);
+      setSelectedIcon(PRESET_ICONS[0].iconName);
     }
   }, [isOpen]);
 
@@ -303,39 +339,224 @@ export const FixedExpenseModal: React.FC<FixedExpenseModalProps> = ({
 
                   {/* Category picker grid */}
                   <div className="space-y-1">
-                    <label className="text-[10px] font-semibold text-neutral-500 tracking-wider uppercase ml-1">选择分类</label>
-                    <div className="grid grid-cols-4 gap-1.5 max-h-[120px] overflow-y-auto p-0.5">
+                    <div className="flex items-center justify-between ml-1 mb-1">
+                      <label className="text-[10px] font-semibold text-neutral-500 tracking-wider uppercase">选择分类</label>
+                      {onDeleteCategory && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsDeleteMode(!isDeleteMode);
+                            setErrorMsg('');
+                          }}
+                          className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full transition-all border cursor-pointer flex items-center gap-1 ${
+                            isDeleteMode
+                              ? 'bg-red-500 text-white border-red-500 hover:bg-red-600 shadow-xs'
+                              : 'bg-white text-neutral-600 border-neutral-300 hover:border-neutral-500 hover:bg-neutral-50'
+                          }`}
+                        >
+                          {isDeleteMode ? (
+                            <><Icons.Check size={10} strokeWidth={3} /><span>完成管理</span></>
+                          ) : (
+                            <><Icons.Settings size={10} /><span>管理分类</span></>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-4 gap-1.5 max-h-[140px] overflow-y-auto p-0.5">
                       {Object.keys(categories).map((catName) => {
                         const catInfo = categories[catName];
                         const IconComponent = (Icons as any)[catInfo.iconName] || Icons.HelpCircle;
                         const isSelected = category === catName;
 
                         return (
-                          <button
-                            key={catName}
-                            type="button"
-                            onClick={() => setCategory(catName)}
-                            className={`flex flex-col items-center justify-center py-2 px-1 rounded-2xl border-2 transition-all cursor-pointer ${
-                              isSelected
-                                ? 'border-black bg-black text-[var(--color-btn-primary-text)] shadow-xs'
-                                : 'border-neutral-200 bg-white text-neutral-700 hover:border-neutral-350'
-                            }`}
-                          >
-                            <div 
-                              className={`p-1 rounded-xl mb-1 shrink-0 ${
-                                isSelected ? 'bg-white/20' : catInfo.bgColor
+                          <div key={catName} className="relative">
+                            <button
+
+                              type="button"
+                              onClick={() => {
+                                if (isDeleteMode) {
+                                  if (Object.keys(categories).length <= 1) {
+                                    setErrorMsg('必须保留至少一个消费类别哦！');
+                                    return;
+                                  }
+                                  if (confirm(`确定要删除分类"${catName}"吗？`)) {
+                                    onDeleteCategory?.(catName);
+                                    if (category === catName) {
+                                      const remaining = Object.keys(categories).filter(k => k !== catName);
+                                      setCategory(remaining[0] || '');
+                                    }
+                                  }
+                                } else {
+                                  setCategory(catName);
+                                }
+                              }}
+                              className={`w-full flex flex-col items-center justify-center py-2 px-1 rounded-2xl border-2 transition-all cursor-pointer ${
+                                isDeleteMode
+                                  ? 'border-red-300 hover:border-red-500 bg-red-50/20 text-red-900'
+                                  : isSelected
+                                  ? 'border-black bg-black text-[var(--color-btn-primary-text)] shadow-xs'
+                                  : 'border-neutral-200 bg-white text-neutral-700 hover:border-neutral-350'
                               }`}
                             >
-                              <IconComponent size={12} className="stroke-[2.5px]" />
-                            </div>
-                            <span className="text-[9px] font-extrabold tracking-tight truncate w-full text-center px-0.5">
-                              {catName}
-                            </span>
-                          </button>
+                              <div className={`p-1 rounded-xl mb-1 shrink-0 transition-colors ${
+                                isDeleteMode ? 'bg-red-100 text-red-600' : isSelected ? 'bg-white/20' : catInfo.bgColor
+                              }`}>
+                                {isDeleteMode ? (
+                                  <Icons.Trash2 size={12} className="stroke-[2.5px] text-red-600 animate-pulse" />
+                                ) : (
+                                  <IconComponent size={12} className="stroke-[2.5px]" />
+                                )}
+                              </div>
+                              <span className={`text-[9px] font-extrabold tracking-tight truncate w-full text-center px-0.5 ${isDeleteMode ? 'text-red-700' : ''}`}>
+                                {catName}
+                              </span>
+                            </button>
+                            {isDeleteMode && (
+                              <div className="absolute -top-1 -right-1 bg-red-500 text-white w-3.5 h-3.5 rounded-full flex items-center justify-center border border-white text-[7px] font-bold pointer-events-none shadow-sm">
+                                ✕
+                              </div>
+                            )}
+                          </div>
                         );
                       })}
+                      {/* Add Custom Category Button — only shown when NOT in delete mode */}
+                      {!isDeleteMode && onAddCategory && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsAddingCustomCat(!isAddingCustomCat);
+                            setErrorMsg('');
+                          }}
+                          className={`flex flex-col items-center justify-center py-2 px-1 rounded-2xl border-2 border-dashed transition-all cursor-pointer ${
+                            isAddingCustomCat
+                              ? 'border-black bg-pink-50 text-black'
+                              : 'border-neutral-300 bg-white/40 text-neutral-500 hover:border-neutral-400'
+                          }`}
+                        >
+                          <div className="p-1 rounded-xl mb-1 bg-neutral-200/50">
+                            <Icons.Plus size={12} className="stroke-[2.5px]" />
+                          </div>
+                          <span className="text-[9px] font-bold tracking-tight">自定义</span>
+                        </button>
+                      )}
                     </div>
                   </div>
+
+                  {/* Custom Category Drawer */}
+                  <AnimatePresence>
+                    {isAddingCustomCat && onAddCategory && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="bg-white/80 border-2 border-neutral-300 rounded-[24px] p-4 space-y-3 shadow-sm overflow-hidden"
+                      >
+                        <div className="flex items-center justify-between text-xs font-bold text-neutral-800">
+                          <span className="flex items-center gap-1">✨ 添加自定义分类</span>
+                          <button
+                            type="button"
+                            onClick={() => setIsAddingCustomCat(false)}
+                            className="text-neutral-400 hover:text-black p-0.5 cursor-pointer"
+                          >
+                            <Icons.X size={14} />
+                          </button>
+                        </div>
+
+                        {/* Name input */}
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block">类别名称</label>
+                          <input
+                            type="text"
+                            maxLength={6}
+                            placeholder="如: 房租、健身卡、网费..."
+                            value={customCatName}
+                            onChange={(e) => setCustomCatName(e.target.value)}
+                            className="w-full px-3 py-1.5 rounded-full border border-neutral-300 bg-white text-xs font-bold text-neutral-900 focus:border-black focus:outline-none focus:ring-0"
+                          />
+                        </div>
+
+                        {/* Color presets */}
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block">选取颜色</label>
+                          <div className="flex flex-wrap gap-2">
+                            {PRESET_COLORS.map((col) => (
+                              <button
+                                key={col.hex}
+                                type="button"
+                                onClick={() => setSelectedColor(col)}
+                                className={`w-6 h-6 rounded-full border-2 transition-transform cursor-pointer ${
+                                  selectedColor.hex === col.hex ? 'border-black scale-110 shadow-sm' : 'border-transparent hover:scale-105'
+                                }`}
+                                style={{ backgroundColor: col.hex }}
+                                title={col.name}
+                              />
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Icon presets */}
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block">选取图标徽章</label>
+                          <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
+                            {PRESET_ICONS.map((ic) => {
+                              const IconComp = (Icons as any)[ic.iconName] || Icons.Tag;
+                              const isIconSelected = selectedIcon === ic.iconName;
+                              return (
+                                <button
+                                  key={ic.iconName}
+                                  type="button"
+                                  onClick={() => setSelectedIcon(ic.iconName)}
+                                  className={`flex flex-col items-center shrink-0 p-1.5 rounded-xl border-2 transition-all cursor-pointer ${
+                                    isIconSelected
+                                      ? 'border-black bg-black text-white shadow-xs'
+                                      : 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-350'
+                                  }`}
+                                >
+                                  <IconComp size={14} className="stroke-[2.5px]" />
+                                  <span className="text-[8px] font-bold mt-0.5">{ic.label}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Confirm button */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const trimmed = customCatName.trim();
+                            if (!trimmed) {
+                              setErrorMsg('请输入自定义分类名称');
+                              return;
+                            }
+                            if (trimmed.length > 6) {
+                              setErrorMsg('分类名不能超过 6 个字');
+                              return;
+                            }
+                            if (categories[trimmed]) {
+                              setErrorMsg('该分类名称已存在');
+                              return;
+                            }
+                            const newCat: CategoryInfo = {
+                              name: trimmed,
+                              color: selectedColor.hex,
+                              bgColor: selectedColor.bg,
+                              circleColor: selectedColor.hex,
+                              iconName: selectedIcon,
+                            };
+                            onAddCategory(newCat);
+                            setCategory(trimmed);
+                            setCustomCatName('');
+                            setIsAddingCustomCat(false);
+                          }}
+                          className="w-full bg-black hover:opacity-90 text-white py-2 rounded-full text-xs font-extrabold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                        >
+                          <Icons.Check size={13} strokeWidth={3} />
+                          创建并使用此分类
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
 
                   {/* Day of Month selection */}
                   <div className="space-y-1">

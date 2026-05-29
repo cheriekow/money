@@ -1271,12 +1271,12 @@ export default function App() {
                 <div className="w-full border-t border-dashed border-neutral-200 mt-4 pt-3.5 flex justify-around text-center select-none">
                   <div>
                     <span className="block text-[10px] uppercase font-bold text-neutral-400">本月支出</span>
-                    <span className="text-sm font-black text-neutral-800 font-mono">{currentMonthExpenses.length} 笔</span>
+                    <span className="text-sm font-black text-neutral-800 font-mono">{currentMonthExpenses.length + virtualFixedExpensesForThisMonth.length} 笔</span>
                   </div>
                   <div className="border-r border-neutral-200" />
                   <div>
                     <span className="block text-[10px] uppercase font-bold text-neutral-400">总计支出额</span>
-                    <span className="text-sm font-black text-neutral-900 font-mono text-[#e06666]">{currency}{currentMonthExpenses.reduce((sum, e) => sum + e.amount, 0).toFixed(2)}</span>
+                    <span className="text-sm font-black text-neutral-900 font-mono text-[#e06666]">{currency}{(currentMonthExpenses.reduce((sum, e) => sum + e.amount, 0) + virtualFixedExpensesForThisMonth.reduce((sum, e) => sum + e.amount, 0)).toFixed(2)}</span>
                   </div>
                 </div>
               </div>
@@ -1360,14 +1360,14 @@ export default function App() {
               </div>
 
               {/* Budget and remaining warning message */}
-              {currentMonthExpenses.length > 0 && (
+              {(currentMonthExpenses.length + virtualFixedExpensesForThisMonth.length) > 0 && (
                 <div className="bg-white/40 border border-neutral-200/50 rounded-[28px] p-4 flex items-center gap-3.5">
                   <div className="w-9 h-9 rounded-full bg-[#FDE68A]/80 flex items-center justify-center shrink-0 border border-black/5">
                     <Icons.CheckCircle2 size={15} className="text-amber-800" />
                   </div>
                   <div className="flex-1 font-sans">
                     <p className="text-xs text-neutral-700 leading-normal">
-                      本月累计记录消费 <strong>{currentMonthExpenses.length}</strong> 笔，总花费 <strong>{currency}{currentMonthExpenses.reduce((sum, e) => sum + e.amount, 0).toFixed(1)}</strong>。
+                      本月累计记录消费 <strong>{currentMonthExpenses.length}</strong> 笔（含 <strong>{virtualFixedExpensesForThisMonth.length}</strong> 项固定开销），总花费 <strong>{currency}{(currentMonthExpenses.reduce((sum, e) => sum + e.amount, 0) + virtualFixedExpensesForThisMonth.reduce((sum, e) => sum + e.amount, 0)).toFixed(1)}</strong>。
                     </p>
                   </div>
                 </div>
@@ -2171,6 +2171,8 @@ export default function App() {
             onEditRule={handleEditFixedRule}
             onDeleteRule={handleClearFixedRule}
             categories={categories}
+            onAddCategory={handleAddCategory}
+            onDeleteCategory={handleDeleteCategory}
             currency={currency}
           />
         )}
