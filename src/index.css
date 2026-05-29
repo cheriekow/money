@@ -113,6 +113,9 @@ body {
 
   --color-active-badge-bg: rgba(255, 255, 255, 0.15);
   --color-active-badge-text: #FBCFE8;
+
+  --color-card-dark: #1a1a1a;
+  --color-card-dark-text: #ffffff;
 }
 
 /* --- 2. 极客赛博 (Cyberpunk Dark Mode) --- */
@@ -138,6 +141,9 @@ body {
 
   --color-active-badge-bg: rgba(11, 15, 25, 0.15);
   --color-active-badge-text: #0b0f19;
+
+  --color-card-dark: #161e2e;
+  --color-card-dark-text: #ffffff;
 }
 
 /* --- 3. 抹茶森林 (Matcha Forest - Recommended) --- */
@@ -163,6 +169,9 @@ body {
 
   --color-active-badge-bg: rgba(239, 242, 235, 0.15);
   --color-active-badge-text: #eff2eb;
+
+  --color-card-dark: #cbd5c5; /* 抹茶森林下用莫兰迪浅绿，打破单一色调 */
+  --color-card-dark-text: #1b2e1a; /* 搭配森林深绿色文字，对比极清晰 */
 }
 
 /* ==========================================
@@ -226,12 +235,6 @@ body {
 [data-theme="cyberpunk"] .border-black,
 [data-theme="cyberpunk"] .border-neutral-900 {
   border-color: var(--color-btn-primary) !important;
-}
-
-[data-theme="cyberpunk"] .bg-\[\#1a1a1a\] {
-  background-color: var(--color-card) !important;
-  color: var(--color-text) !important;
-  border-color: var(--color-card-border) !important;
 }
 
 /* 针对赛博朋克输入框的特别处理 */
@@ -301,12 +304,6 @@ body {
 [data-theme="matcha"] .border-black,
 [data-theme="matcha"] .border-neutral-900 {
   border-color: var(--color-btn-primary) !important;
-}
-
-[data-theme="matcha"] .bg-\[\#1a1a1a\] {
-  background-color: var(--color-btn-primary) !important;
-  color: var(--color-btn-primary-text) !important;
-  border-color: var(--color-card-border) !important;
 }
 
 /* 针对抹茶森林输入框的特别处理 */

@@ -657,23 +657,23 @@ export default function App() {
 
                   {/* Card 2: Interactive left balance calculator with customize limit support */}
                   <div 
-                    className="bg-[#1a1a1a] p-5 rounded-[28px] border border-black/10 shadow-md transition-all relative overflow-hidden"
+                    className="bg-[var(--color-card-dark)] text-[var(--color-card-dark-text)] p-5 rounded-[28px] border border-black/10 shadow-md transition-all relative overflow-hidden"
                     id="sleek-balance-card"
                   >
                     {isEditingBudget ? (
-                      <div className="space-y-2 text-white animate-scale-up" onClick={(e) => e.stopPropagation()}>
-                        <div className="text-[9px] font-bold uppercase text-white/50 flex items-center gap-1">
+                      <div className="space-y-2 text-current animate-scale-up" onClick={(e) => e.stopPropagation()}>
+                        <div className="text-[9px] font-bold uppercase opacity-60 flex items-center gap-1">
                           <Icons.Edit2 size={10} className="text-[var(--color-accent)]" />
                           修改本月限额 (预算)
                         </div>
                         <div className="flex items-center gap-1.5 mt-1">
-                          <span className="text-xs font-bold text-neutral-400">{currency}</span>
+                          <span className="text-xs font-bold opacity-60">{currency}</span>
                           <input
                             type="number"
                             step="100"
                             value={budgetInput}
                             onChange={(e) => setBudgetInput(e.target.value)}
-                            className="w-full bg-white/10 text-white rounded-md px-2 py-1 text-xs font-bold focus:outline-none ring-1 ring-white/20 focus:ring-[var(--color-accent)]"
+                            className="w-full bg-white/10 text-current rounded-md px-2 py-1 text-xs font-bold focus:outline-none ring-1 ring-white/20 focus:ring-[var(--color-accent)]"
                             placeholder="2000"
                             autoFocus
                           />
@@ -704,7 +704,7 @@ export default function App() {
                               setBudgetInput(monthlyBudget.toString());
                               setIsEditingBudget(false);
                             }}
-                            className="text-neutral-300 hover:text-white text-[10px] font-bold px-1.5 py-1 cursor-pointer"
+                            className="opacity-70 hover:opacity-100 text-[10px] font-bold px-1.5 py-1 cursor-pointer"
                           >
                             取消
                           </button>
@@ -719,18 +719,18 @@ export default function App() {
                         className="cursor-pointer group flex flex-col h-full justify-between"
                       >
                         <div>
-                          <div className="text-[10px] font-bold uppercase text-white/50 mb-1 flex items-center justify-between">
+                          <div className="text-[10px] font-bold uppercase opacity-60 mb-1 flex items-center justify-between">
                             <div className="flex items-center gap-1">
                               <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-accent)] animate-pulse" />
                               结余 ({filterMonthOnly ? `限额${currency}${monthlyBudget}` : "历史汇总"})
                             </div>
                             <Icons.Edit2 size={11} className="text-[var(--color-accent)] opacity-0 group-hover:opacity-100 transition-opacity" />
                           </div>
-                          <div className="text-xl font-bold text-white font-sans tracking-tight mt-0.5">
+                          <div className="text-xl font-bold font-sans tracking-tight mt-0.5">
                             {currency}{(monthlyBudget - displayTotal).toFixed(0)}
                           </div>
                         </div>
-                        <p className="text-[9px] text-white/40 mt-1 leading-normal group-hover:text-white/60 transition-colors">
+                        <p className="text-[9px] opacity-50 mt-1 leading-normal group-hover:opacity-85 transition-colors">
                           点击卡片自定义限额 ✏️
                         </p>
                       </div>
@@ -1007,8 +1007,8 @@ export default function App() {
                                   {/* LEFT CATEGORY ICON */}
                                   <div className="flex items-center space-x-3.5 flex-1 min-w-0">
                                     <div 
-                                      className="w-11 h-11 rounded-full flex items-center justify-center text-neutral-900 border border-[var(--color-card-border)] shadow-xs shrink-0 select-none transition-transform group-hover:scale-105"
-                                      style={{ backgroundColor: catInfo.color }}
+                                      className="w-11 h-11 rounded-full flex items-center justify-center border border-[var(--color-card-border)] shadow-xs shrink-0 select-none transition-transform group-hover:scale-105"
+                                      style={{ backgroundColor: catInfo.color, color: '#1a1a1a' }}
                                     >
                                       <IconComponent size={18} strokeWidth={2.5} />
                                     </div>
@@ -1395,8 +1395,8 @@ export default function App() {
                           >
                             <div className="flex items-center space-x-3.5 flex-1 min-w-0">
                               <div 
-                                className="w-11 h-11 rounded-full flex items-center justify-center text-neutral-900 border border-neutral-200/50 shadow-xs shrink-0 select-none transition-transform group-hover:scale-105"
-                                style={{ backgroundColor: catInfo.color }}
+                                className="w-11 h-11 rounded-full flex items-center justify-center border border-neutral-200/50 shadow-xs shrink-0 select-none transition-transform group-hover:scale-105"
+                                style={{ backgroundColor: catInfo.color, color: '#1a1a1a' }}
                               >
                                 <IconComponent size={18} strokeWidth={2.5} />
                               </div>
