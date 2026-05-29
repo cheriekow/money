@@ -1169,7 +1169,7 @@ export default function App() {
                     </button>
                   </div>
                 ) : (
-                  <div className="divide-y divide-neutral-100/70 space-y-4">
+                  <div className="divide-y divide-[var(--color-input-border)]/40 space-y-4">
                     {currentMonthGroupedByDate.map((group) => {
                       return (
                         <div key={group.date} className="pt-4 first:pt-0 flex flex-col gap-2">
@@ -1188,7 +1188,7 @@ export default function App() {
                           </div>
 
                           {/* Nested itemized log showing the exact breakdown */}
-                          <div className="bg-neutral-50/50 border border-neutral-100/70 rounded-2xl p-3 flex flex-col gap-2">
+                          <div className="bg-[var(--color-input-bg)] border border-[var(--color-input-border)]/40 rounded-2xl p-3 flex flex-col gap-2">
                             {group.items.map((item) => {
                               const catInfo = categories[item.category] || { color: '#CCCCCC', iconName: 'Tag' };
                               return (
@@ -1391,7 +1391,7 @@ export default function App() {
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95 }}
-                            className="group flex items-center justify-between bg-white border border-neutral-100/80 rounded-[22px] p-4 transition-all duration-200 hover:border-neutral-900/40 hover:shadow-xs relative"
+                            className="group flex items-center justify-between bg-white border border-[var(--color-card-border)] rounded-[22px] p-4 transition-all duration-200 hover:border-neutral-900/40 hover:shadow-xs relative"
                           >
                             <div className="flex items-center space-x-3.5 flex-1 min-w-0">
                               <div 
