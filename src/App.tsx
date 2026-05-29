@@ -769,7 +769,7 @@ export default function App() {
                             }}
                             className={`flex-shrink-0 px-3 py-2 rounded-2xl flex flex-col items-center justify-center border transition-all cursor-pointer ${
                               isActive 
-                                ? 'bg-neutral-950 text-[var(--color-btn-primary-text)] border-neutral-950 shadow-md scale-102 font-bold' 
+                                ? 'bg-[var(--color-btn-primary)] text-[var(--color-btn-primary-text)] border-[var(--color-active-border)] shadow-md scale-102 font-bold' 
                                 : 'bg-white text-neutral-700 border-neutral-200 hover:border-neutral-405 hover:shadow-xs'
                             }`}
                             style={{ minWidth: '78px' }}
@@ -1319,7 +1319,7 @@ export default function App() {
                       }}
                       className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition-all border cursor-pointer ${
                         selectedCategory === null
-                          ? 'bg-neutral-950 text-white border-neutral-950 shadow-xs'
+                          ? 'bg-[var(--color-btn-primary)] text-[var(--color-btn-primary-text)] border-[var(--color-active-border)] shadow-xs'
                           : 'bg-white text-neutral-600 border-neutral-200 hover:border-neutral-350 hover:bg-neutral-50'
                       }`}
                     >
@@ -1562,10 +1562,10 @@ export default function App() {
                       },
                       {
                         id: 'citrus',
-                        name: '蜜橘气泡 (元气)',
-                        desc: '鲜活橘红与西柚橙黄',
-                        colorPreview: 'bg-[#fdfaf2] border-[#e9decb] text-[#332211]',
-                        dotColors: ['#ff9f1c', '#ffe5b4', '#e76f51']
+                        name: '麦香卡其 (温馨)',
+                        desc: '温馨舒适的暖沙麦香卡其',
+                        colorPreview: 'bg-[#f4f0e6] border-[#e2dacd] text-[#3e332b]',
+                        dotColors: ['#ebdccb', '#8c7b6c', '#7d6b5c']
                       }
                     ].map((t) => {
                       const isSelected = activeTheme === t.id;
@@ -2177,7 +2177,7 @@ export default function App() {
                       { id: 'matcha', name: '抹茶森林', previewColor: 'bg-[#eff2eb]' },
                       { id: 'sakura', name: '樱花汽水', previewColor: 'bg-[#fdf8f9]' },
                       { id: 'ocean', name: '冰酿海盐', previewColor: 'bg-[#f0f5fa]' },
-                      { id: 'citrus', name: '蜜橘气泡', previewColor: 'bg-[#fdfaf2]' }
+                      { id: 'citrus', name: '麦香卡其', previewColor: 'bg-[#f4f0e6]' }
                     ].map((t) => {
                       const isSelected = activeTheme === t.id;
                       return (

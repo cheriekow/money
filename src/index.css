@@ -116,6 +116,8 @@ body {
 
   --color-card-dark: #1a1a1a;
   --color-card-dark-text: #ffffff;
+
+  --color-active-border: #1a1a1a;
 }
 
 /* --- 2. 极客赛博 (Cyberpunk Dark Mode) --- */
@@ -144,6 +146,8 @@ body {
 
   --color-card-dark: #161e2e;
   --color-card-dark-text: #ffffff;
+
+  --color-active-border: #38bdf8;
 }
 
 /* --- 3. 抹茶森林 (Matcha Forest - Recommended) --- */
@@ -172,6 +176,8 @@ body {
 
   --color-card-dark: #cbd5c5; /* 抹茶森林下用莫兰迪浅绿，打破单一色调 */
   --color-card-dark-text: #1b2e1a; /* 搭配森林深绿色文字，对比极清晰 */
+
+  --color-active-border: #1b2e1a;
 }
 
 /* --- 4. 樱花汽水 (Sakura Soda) --- */
@@ -200,6 +206,8 @@ body {
 
   --color-card-dark: #ffe4e1; /* 浅桃粉色，形成非对称甜美呼应 */
   --color-card-dark-text: #2e151b;
+
+  --color-active-border: #754f59;
 }
 
 /* --- 5. 冰酿海盐 (Sea Salt Ice) --- */
@@ -228,34 +236,38 @@ body {
 
   --color-card-dark: #bde0fe; /* 浅海蓝，形成双色清新呼应 */
   --color-card-dark-text: #122333;
+
+  --color-active-border: #122333;
 }
 
-/* --- 6. 蜜橘气泡 (Mandarin Fizz) --- */
+/* --- 6. 麦香卡其 (Warm Khaki Sand) --- */
 [data-theme="citrus"] {
-  --color-bg: #fdfaf2; /* 软杏奶油色 */
-  --color-text: #332211; /* 浓缩焦糖深啡色 */
-  --color-text-secondary: #7c5c43; /* 焦糖玛奇朵棕 */
-  --color-text-tertiary: #b09581;
+  --color-bg: #f4f0e6; /* 温馨舒适的麦香暖沙底色 */
+  --color-text: #3e332b; /* 优雅柔和的深焦糖褐字，温和高对比 */
+  --color-text-secondary: #7d6b5c; /* 舒缓的炭烧可可褐 */
+  --color-text-tertiary: #b5a89b; /* 麦穗燕麦浅灰褐 */
   
   --color-card: #ffffff;
   --color-card-solid: #ffffff;
-  --color-card-border: rgba(231, 111, 81, 0.15);
+  --color-card-border: rgba(140, 123, 108, 0.15); /* 柔和燕麦边框 */
   
-  --color-input-bg: #faf5eb;
-  --color-input-border: #e9decb;
+  --color-input-bg: #faf6ee; /* 极轻燕麦奶底 */
+  --color-input-border: #e2dacd; /* 麦沙灰褐输入边框 */
   
-  --color-btn-primary: #e76f51; /* 活力橘红 */
-  --color-btn-primary-hover: #d45c3f;
+  --color-btn-primary: #8c7b6c; /* 高级温暖的拿铁卡其色 */
+  --color-btn-primary-hover: #78685b; /* 稍深一号的拿铁褐 */
   --color-btn-primary-text: #ffffff;
   
-  --color-accent: #ff9f1c; /* 蜜橘金橙高亮 */
-  --color-accent-text: #332211;
+  --color-accent: #ebdccb; /* 舒缓温润的燕麦卡其金 */
+  --color-accent-text: #3e332b;
 
-  --color-active-badge-bg: rgba(51, 34, 17, 0.08);
-  --color-active-badge-text: #332211;
+  --color-active-badge-bg: rgba(140, 123, 108, 0.12);
+  --color-active-badge-text: #8c7b6c;
 
-  --color-card-dark: #ffe5b4; /* 蜜橘浅色，非对称明亮呼应 */
-  --color-card-dark-text: #332211;
+  --color-card-dark: #ebdccb; /* 温暖燕麦呼应色 */
+  --color-card-dark-text: #3e332b;
+
+  --color-active-border: #3e332b;
 }
 
 /* ==========================================
@@ -316,9 +328,11 @@ body {
   background-color: var(--color-btn-primary-hover) !important;
 }
 
+[data-theme="cyberpunk"] .border-neutral-955,
+[data-theme="cyberpunk"] .border-neutral-950,
 [data-theme="cyberpunk"] .border-black,
 [data-theme="cyberpunk"] .border-neutral-900 {
-  border-color: var(--color-btn-primary) !important;
+  border-color: var(--color-active-border) !important;
 }
 
 /* 针对赛博朋克输入框的特别处理 */
@@ -385,9 +399,11 @@ body {
   background-color: var(--color-btn-primary-hover) !important;
 }
 
+[data-theme="matcha"] .border-neutral-955,
+[data-theme="matcha"] .border-neutral-950,
 [data-theme="matcha"] .border-black,
 [data-theme="matcha"] .border-neutral-900 {
-  border-color: var(--color-btn-primary) !important;
+  border-color: var(--color-active-border) !important;
 }
 
 /* 针对抹茶森林输入框的特别处理 */
@@ -453,9 +469,11 @@ body {
   background-color: var(--color-btn-primary-hover) !important;
 }
 
+[data-theme="sakura"] .border-neutral-955,
+[data-theme="sakura"] .border-neutral-950,
 [data-theme="sakura"] .border-black,
 [data-theme="sakura"] .border-neutral-900 {
-  border-color: var(--color-btn-primary) !important;
+  border-color: var(--color-active-border) !important;
 }
 
 [data-theme="sakura"] input,
@@ -521,9 +539,11 @@ body {
   background-color: var(--color-btn-primary-hover) !important;
 }
 
+[data-theme="ocean"] .border-neutral-955,
+[data-theme="ocean"] .border-neutral-950,
 [data-theme="ocean"] .border-black,
 [data-theme="ocean"] .border-neutral-900 {
-  border-color: var(--color-btn-primary) !important;
+  border-color: var(--color-active-border) !important;
 }
 
 [data-theme="ocean"] input,
@@ -589,9 +609,11 @@ body {
   background-color: var(--color-btn-primary-hover) !important;
 }
 
+[data-theme="citrus"] .border-neutral-955,
+[data-theme="citrus"] .border-neutral-950,
 [data-theme="citrus"] .border-black,
 [data-theme="citrus"] .border-neutral-900 {
-  border-color: var(--color-btn-primary) !important;
+  border-color: var(--color-active-border) !important;
 }
 
 [data-theme="citrus"] input,
