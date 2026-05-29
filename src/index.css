@@ -94,7 +94,7 @@ body {
 :root, [data-theme="cream"] {
   --color-bg: #f7f3e8;
   --color-text: #1a1a1a;
-  --color-text-secondary: #525252;
+  --color-text-secondary: #525252; /* 恢复原汁原味舒适的极简灰 */
   --color-text-tertiary: #a3a3a3;
   
   --color-card: rgba(255, 255, 255, 0.8);
@@ -107,44 +107,62 @@ body {
   --color-btn-primary: #1a1a1a;
   --color-btn-primary-hover: #000000;
   --color-btn-primary-text: #ffffff;
+  
+  --color-accent: #FBCFE8; /* 柔美标志粉 */
+  --color-accent-text: #1a1a1a;
+
+  --color-active-badge-bg: rgba(255, 255, 255, 0.15);
+  --color-active-badge-text: #FBCFE8;
 }
 
 /* --- 2. 极客赛博 (Cyberpunk Dark Mode) --- */
 [data-theme="cyberpunk"] {
-  --color-bg: #0b0c10;
-  --color-text: #f5f6f8;
-  --color-text-secondary: #94a3b8;
+  --color-bg: #0b0f19; /* 舒适深夜暗蓝，极度护眼，告别刺眼纯黑 */
+  --color-text: #ffffff; /* 纯白高亮文字，看字不费劲 */
+  --color-text-secondary: #94a3b8; /* 舒缓板岩灰 */
   --color-text-tertiary: #64748b;
   
-  --color-card: rgba(22, 27, 34, 0.85);
-  --color-card-solid: #161b22;
-  --color-card-border: rgba(56, 189, 248, 0.2); /* 霓虹青边缘 */
+  --color-card: #161e2e; /* 优雅的深石墨卡片背景 */
+  --color-card-solid: #161e2e;
+  --color-card-border: rgba(56, 189, 248, 0.25); /* 霓虹青边缘 */
   
-  --color-input-bg: rgba(15, 23, 42, 0.6);
+  --color-input-bg: #0f172a; /* 极深输入区底色 */
   --color-input-border: #334155;
   
-  --color-btn-primary: #38bdf8; /* 极客青 */
+  --color-btn-primary: #38bdf8; /* 激光青 */
   --color-btn-primary-hover: #0ea5e9;
-  --color-btn-primary-text: #0b0c10;
+  --color-btn-primary-text: #0b0f19; /* 激光青上的文字，黑字反差大，看得清 */
+  
+  --color-accent: #38bdf8; /* 激光青高亮 */
+  --color-accent-text: #0b0f19;
+
+  --color-active-badge-bg: rgba(11, 15, 25, 0.15);
+  --color-active-badge-text: #0b0f19;
 }
 
 /* --- 3. 抹茶森林 (Matcha Forest - Recommended) --- */
 [data-theme="matcha"] {
   --color-bg: #eff2eb; /* 抹茶乳白 */
-  --color-text: #1d251d; /* 森林深绿 */
-  --color-text-secondary: #586953;
+  --color-text: #1b2e1a; /* 森林深绿 */
+  --color-text-secondary: #5a6e58; /* 灰绿副文本 */
   --color-text-tertiary: #8f9e8a;
   
-  --color-card: rgba(255, 255, 255, 0.85);
+  --color-card: #ffffff; /* 纯白卡片 */
   --color-card-solid: #ffffff;
-  --color-card-border: rgba(143, 161, 137, 0.35);
+  --color-card-border: rgba(90, 110, 88, 0.2);
   
-  --color-input-bg: rgba(255, 255, 255, 0.75);
+  --color-input-bg: #f4f7f1; /* 极轻苔绿背景 */
   --color-input-border: #cbd5c5;
   
-  --color-btn-primary: #3e5c33; /* 抹茶绿 */
-  --color-btn-primary-hover: #2d4525;
+  --color-btn-primary: #3e6b35; /* 森林深绿 */
+  --color-btn-primary-hover: #2d5225;
   --color-btn-primary-text: #eff2eb;
+  
+  --color-accent: #3e6b35; /* 森林深绿高亮 */
+  --color-accent-text: #eff2eb;
+
+  --color-active-badge-bg: rgba(239, 242, 235, 0.15);
+  --color-active-badge-text: #eff2eb;
 }
 
 /* ==========================================
@@ -164,7 +182,7 @@ body {
 [data-theme="cyberpunk"] .bg-neutral-50\/50,
 [data-theme="cyberpunk"] .bg-neutral-50\/70,
 [data-theme="cyberpunk"] .bg-neutral-100,
-[data-theme="cyberpunk"] .bg-[#BFDBFE]\/10 {
+[data-theme="cyberpunk"] .bg-\[\#BFDBFE\]\/10 {
   background-color: var(--color-input-bg) !important;
 }
 
@@ -210,6 +228,12 @@ body {
   border-color: var(--color-btn-primary) !important;
 }
 
+[data-theme="cyberpunk"] .bg-\[\#1a1a1a\] {
+  background-color: var(--color-card) !important;
+  color: var(--color-text) !important;
+  border-color: var(--color-card-border) !important;
+}
+
 /* 针对赛博朋克输入框的特别处理 */
 [data-theme="cyberpunk"] input,
 [data-theme="cyberpunk"] select,
@@ -233,7 +257,7 @@ body {
 [data-theme="matcha"] .bg-neutral-50\/50,
 [data-theme="matcha"] .bg-neutral-50\/70,
 [data-theme="matcha"] .bg-neutral-100,
-[data-theme="matcha"] .bg-[#BFDBFE]\/10 {
+[data-theme="matcha"] .bg-\[\#BFDBFE\]\/10 {
   background-color: var(--color-input-bg) !important;
 }
 
@@ -277,6 +301,12 @@ body {
 [data-theme="matcha"] .border-black,
 [data-theme="matcha"] .border-neutral-900 {
   border-color: var(--color-btn-primary) !important;
+}
+
+[data-theme="matcha"] .bg-\[\#1a1a1a\] {
+  background-color: var(--color-btn-primary) !important;
+  color: var(--color-btn-primary-text) !important;
+  border-color: var(--color-card-border) !important;
 }
 
 /* 针对抹茶森林输入框的特别处理 */

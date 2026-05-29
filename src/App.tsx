@@ -506,7 +506,7 @@ export default function App() {
               className="w-9 h-9 border border-neutral-300 hover:border-black rounded-full flex items-center justify-center text-neutral-600 hover:text-black transition-all cursor-pointer bg-white shadow-xs hover:bg-white relative hover:scale-[1.05] active:scale-[0.95]"
             >
               <Icons.Settings size={15} />
-              <span className="absolute -top-1.5 -right-1.5 bg-black text-white text-[8px] font-black w-5 h-5 rounded-full flex items-center justify-center border border-white/80 shadow-md transform scale-90">
+              <span className="absolute -top-1.5 -right-1.5 bg-black text-[var(--color-btn-primary-text)] text-[8px] font-black w-5 h-5 rounded-full flex items-center justify-center border border-white/80 shadow-md transform scale-90">
                 {currency}
               </span>
             </button>
@@ -520,8 +520,8 @@ export default function App() {
               <Icons.RotateCcw size={15} />
             </button>
 
-            <div className="hidden md:flex items-center gap-1.5 bg-black text-white px-3 py-1.5 rounded-full text-xs font-semibold shadow-xs shrink-0">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#FBCFE8] animate-pulse" />
+            <div className="hidden md:flex items-center gap-1.5 bg-black text-[var(--color-btn-primary-text)] px-3 py-1.5 rounded-full text-xs font-semibold shadow-xs shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-accent)] animate-pulse" />
               <span>{filteredByMonthExpenses.length}笔记录</span>
             </div>
           </div>
@@ -537,10 +537,10 @@ export default function App() {
               initial={{ y: -20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: -20, opacity: 0 }}
-              className="p-3 bg-neutral-900 border border-white/15 text-white text-xs font-semibold rounded-full flex items-center justify-between shadow-xl"
+              className="p-3 bg-neutral-900 border border-white/15 text-[var(--color-btn-primary-text)] text-xs font-semibold rounded-full flex items-center justify-between shadow-xl"
               id="toast-notification"
             >
-              <div className="flex items-center gap-2 px-1 text-white">
+              <div className="flex items-center gap-2 px-1 text-[var(--color-btn-primary-text)]">
                 {feedbackMsg.type === 'success' ? (
                   <span className="w-2 h-2 rounded-full bg-green-400" />
                 ) : (
@@ -578,7 +578,7 @@ export default function App() {
                 
                 {/* PWA Premium Install Banner (Hidden if in Standalone mode) */}
                 {!isStandalone && (
-                  <div className="bg-gradient-to-r from-[#FBCFE8]/25 to-[#BFDBFE]/20 border border-[#FBCFE8]/30 p-4 rounded-[28px] shadow-xs flex items-center justify-between gap-4 animate-fade-in" id="pwa-install-banner">
+                  <div className="bg-gradient-to-r from-[var(--color-accent)]/25 to-[#BFDBFE]/20 border border-[var(--color-accent)]/30 p-4 rounded-[28px] shadow-xs flex items-center justify-between gap-4 animate-fade-in" id="pwa-install-banner">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-2xl overflow-hidden shadow-xs shrink-0 flex-shrink-0">
                         <img src="/icon-192.png" className="w-full h-full object-cover" alt="App Logo" />
@@ -590,7 +590,7 @@ export default function App() {
                     </div>
                     <button
                       onClick={() => setIsInstallModalOpen(true)}
-                      className="bg-neutral-950 hover:bg-neutral-800 text-white rounded-full py-1.5 px-4 text-xs font-bold transition-all active:scale-95 cursor-pointer shrink-0"
+                      className="bg-neutral-950 hover:bg-neutral-800 text-[var(--color-btn-primary-text)] rounded-full py-1.5 px-4 text-xs font-bold transition-all active:scale-95 cursor-pointer shrink-0"
                     >
                       安装 App
                     </button>
@@ -601,7 +601,7 @@ export default function App() {
                 <div className="bg-white/80 border border-white/50 backdrop-blur-sm p-6 rounded-[32px] shadow-xs flex flex-col items-center justify-center relative overflow-hidden animate-fade-in" id="chart-card-wrapper">
                   
                   {/* Soft background decor bubble */}
-                  <div className="absolute top-0 right-0 w-20 h-20 bg-[#FBCFE8]/10 rounded-full blur-xl pointer-events-none" />
+                  <div className="absolute top-0 right-0 w-20 h-20 bg-[var(--color-accent)]/10 rounded-full blur-xl pointer-events-none" />
                   
                   <div className="text-center mb-1">
                     <h2 className="text-sm font-extrabold text-neutral-800 tracking-wider uppercase">记账轮盘 analysis</h2>
@@ -642,17 +642,17 @@ export default function App() {
                         triggerFeedback('暂无消费数据，点击下方 + 键开始记账吧！', 'info');
                       }
                     }}
-                    className="bg-[#FBCFE8] hover:bg-[#fad2e1] border border-black/5 p-5 rounded-[28px] shadow-sm cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98]"
+                    className="bg-[var(--color-accent)] hover:opacity-95 text-[var(--color-accent-text)] border border-black/5 p-5 rounded-[28px] shadow-sm cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98]"
                     id="sleek-category-card"
                   >
-                    <div className="text-[10px] font-bold uppercase text-neutral-850/60 mb-1.5 flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-neutral-950/40" />
+                    <div className="text-[10px] font-bold uppercase opacity-75 mb-1.5 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-current opacity-40" />
                       {highestSpendingCat.amount > 0 ? `最高: ${highestSpendingCat.category}` : '日常主买'}
                     </div>
-                    <div className="text-xl font-black text-neutral-955 truncate">
+                    <div className="text-xl font-black truncate">
                       {currency}{highestSpendingCat.amount > 0 ? highestSpendingCat.amount.toFixed(1) : '0'}
                     </div>
-                    <p className="text-[9px] text-neutral-800/50 mt-1 leading-normal font-medium font-sans">点击即可聚焦该分类详情</p>
+                    <p className="text-[9px] opacity-60 mt-1 leading-normal font-medium font-sans">点击即可聚焦该分类详情</p>
                   </div>
 
                   {/* Card 2: Interactive left balance calculator with customize limit support */}
@@ -663,7 +663,7 @@ export default function App() {
                     {isEditingBudget ? (
                       <div className="space-y-2 text-white animate-scale-up" onClick={(e) => e.stopPropagation()}>
                         <div className="text-[9px] font-bold uppercase text-white/50 flex items-center gap-1">
-                          <Icons.Edit2 size={10} className="text-[#FBCFE8]" />
+                          <Icons.Edit2 size={10} className="text-[var(--color-accent)]" />
                           修改本月限额 (预算)
                         </div>
                         <div className="flex items-center gap-1.5 mt-1">
@@ -673,7 +673,7 @@ export default function App() {
                             step="100"
                             value={budgetInput}
                             onChange={(e) => setBudgetInput(e.target.value)}
-                            className="w-full bg-white/10 text-white rounded-md px-2 py-1 text-xs font-bold focus:outline-none ring-1 ring-white/20 focus:ring-[#FBCFE8]"
+                            className="w-full bg-white/10 text-white rounded-md px-2 py-1 text-xs font-bold focus:outline-none ring-1 ring-white/20 focus:ring-[var(--color-accent)]"
                             placeholder="2000"
                             autoFocus
                           />
@@ -693,7 +693,7 @@ export default function App() {
                                 triggerFeedback('请输入合法的金额数值', 'info');
                               }
                             }}
-                            className="bg-[#FBCFE8] hover:bg-[#fad2e1] text-neutral-900 text-[10px] font-extrabold px-2.5 py-1 rounded-full cursor-pointer"
+                            className="bg-[var(--color-accent)] hover:opacity-90 text-[var(--color-accent-text)] text-[10px] font-extrabold px-2.5 py-1 rounded-full cursor-pointer"
                           >
                             保存
                           </button>
@@ -721,10 +721,10 @@ export default function App() {
                         <div>
                           <div className="text-[10px] font-bold uppercase text-white/50 mb-1 flex items-center justify-between">
                             <div className="flex items-center gap-1">
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#FBCFE8] animate-pulse" />
+                              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-accent)] animate-pulse" />
                               结余 ({filterMonthOnly ? `限额${currency}${monthlyBudget}` : "历史汇总"})
                             </div>
-                            <Icons.Edit2 size={11} className="text-[#FBCFE8] opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <Icons.Edit2 size={11} className="text-[var(--color-accent)] opacity-0 group-hover:opacity-100 transition-opacity" />
                           </div>
                           <div className="text-xl font-bold text-white font-sans tracking-tight mt-0.5">
                             {currency}{(monthlyBudget - displayTotal).toFixed(0)}
@@ -769,14 +769,14 @@ export default function App() {
                             }}
                             className={`flex-shrink-0 px-3 py-2 rounded-2xl flex flex-col items-center justify-center border transition-all cursor-pointer ${
                               isActive 
-                                ? 'bg-neutral-950 text-white border-neutral-950 shadow-md scale-102 font-bold' 
+                                ? 'bg-neutral-950 text-[var(--color-btn-primary-text)] border-neutral-950 shadow-md scale-102 font-bold' 
                                 : 'bg-white text-neutral-700 border-neutral-200 hover:border-neutral-405 hover:shadow-xs'
                             }`}
                             style={{ minWidth: '78px' }}
                           >
                             <span className="text-[8px] opacity-60 leading-none">{yearLabel}</span>
                             <span className="text-xs font-black leading-tight mt-0.5">{label}</span>
-                            <span className={`text-[9px] font-bold mt-1.5 px-2 py-0.5 rounded-full font-mono ${isActive ? 'bg-white/10 text-pink-200' : 'bg-neutral-100 text-neutral-600'}`}>
+                            <span className={`text-[9px] font-bold mt-1.5 px-2 py-0.5 rounded-full font-mono ${isActive ? 'bg-[var(--color-active-badge-bg)] text-[var(--color-active-badge-text)]' : 'bg-neutral-100 text-neutral-600'}`}>
                               {currency}{total.toFixed(0)}
                             </span>
                           </button>
@@ -923,8 +923,8 @@ export default function App() {
                             }}
                             className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition-all border cursor-pointer ${
                               selectedCategory === null
-                                ? 'bg-neutral-950 text-white border-neutral-950 scale-102 shadow-xs font-black/90'
-                                : 'bg-white text-neutral-600 border-neutral-200 hover:border-neutral-350 hover:bg-neutral-50'
+                                ? 'bg-[var(--color-btn-primary)] text-[var(--color-btn-primary-text)] border-[var(--color-btn-primary)] scale-102 shadow-xs font-black/90'
+                                : 'bg-[var(--color-card)] text-[var(--color-text-secondary)] border-[var(--color-card-border)] hover:bg-[var(--color-input-bg)]'
                             }`}
                           >
                             全部
@@ -945,8 +945,8 @@ export default function App() {
                                 }}
                                 className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all border cursor-pointer ${
                                   isSelected
-                                    ? 'text-neutral-950 font-black shadow-xs bg-white'
-                                    : 'bg-white text-neutral-600 border-neutral-200 hover:border-neutral-350 hover:bg-neutral-50'
+                                    ? 'text-[var(--color-text)] font-black shadow-xs bg-[var(--color-card)]'
+                                    : 'bg-[var(--color-card)] text-[var(--color-text-secondary)] border-[var(--color-card-border)] hover:bg-[var(--color-input-bg)]'
                                 }`}
                                 style={isSelected ? { borderColor: catInfo.color, boxShadow: `0 2px 5px ${catInfo.color}40`, backgroundColor: `${catInfo.color}25` } : {}}
                               >
@@ -1002,12 +1002,12 @@ export default function App() {
                                   initial={{ opacity: 0, y: 10 }}
                                   animate={{ opacity: 1, y: 0 }}
                                   exit={{ opacity: 0, scale: 0.95 }}
-                                  className="group flex items-center justify-between bg-white border border-neutral-100/80 rounded-[22px] p-4 transition-all duration-200 hover:border-neutral-900/40 hover:shadow-xs relative"
+                                  className="group flex items-center justify-between bg-[var(--color-card)] border border-[var(--color-card-border)] rounded-[22px] p-4 transition-all duration-200 hover:border-[var(--color-accent)]/50 hover:shadow-xs relative"
                                 >
                                   {/* LEFT CATEGORY ICON */}
                                   <div className="flex items-center space-x-3.5 flex-1 min-w-0">
                                     <div 
-                                      className="w-11 h-11 rounded-full flex items-center justify-center text-neutral-900 border border-neutral-200/50 shadow-xs shrink-0 select-none transition-transform group-hover:scale-105"
+                                      className="w-11 h-11 rounded-full flex items-center justify-center text-neutral-900 border border-[var(--color-card-border)] shadow-xs shrink-0 select-none transition-transform group-hover:scale-105"
                                       style={{ backgroundColor: catInfo.color }}
                                     >
                                       <IconComponent size={18} strokeWidth={2.5} />
@@ -1016,9 +1016,9 @@ export default function App() {
                                     {/* NOTE & SPENDING BAR */}
                                     <div className="flex-1 min-w-0 pr-3">
                                       <div className="flex items-baseline space-x-2">
-                                        <span className="text-sm font-extrabold text-neutral-900 select-all">{expense.category}</span>
+                                        <span className="text-sm font-extrabold text-[var(--color-text)] select-all">{expense.category}</span>
                                         {expense.note && (
-                                          <span className="text-[10px] sm:text-xs text-neutral-500 max-w-[90px] min-[360px]:max-w-[130px] min-[400px]:max-w-[160px] sm:max-w-[220px] truncate select-all font-medium font-sans inline-block align-middle ml-1">
+                                          <span className="text-[10px] sm:text-xs text-[var(--color-text-secondary)] max-w-[90px] min-[360px]:max-w-[130px] min-[400px]:max-w-[160px] sm:max-w-[220px] truncate select-all font-medium font-sans inline-block align-middle ml-1">
                                             {expense.note}
                                           </span>
                                         )}
@@ -1026,7 +1026,7 @@ export default function App() {
 
                                       {/* Proportional visual filled progress bar details */}
                                       <div className="flex items-center space-x-2 mt-1.5">
-                                        <div className="w-full h-2 bg-neutral-100 rounded-full overflow-hidden relative">
+                                        <div className="w-full h-2 bg-[var(--color-input-bg)] border border-[var(--color-card-border)]/50 rounded-full overflow-hidden relative">
                                           <div 
                                             className="h-full rounded-full transition-all duration-500 ease-out"
                                             style={{ 
@@ -1035,7 +1035,7 @@ export default function App() {
                                             }}
                                           />
                                         </div>
-                                        <span className="text-[8px] font-mono font-bold text-neutral-400 shrink-0">
+                                        <span className="text-[8px] font-mono font-bold text-[var(--color-text-tertiary)] shrink-0">
                                           {propWidth.toFixed(0)}%
                                         </span>
                                       </div>
@@ -1045,10 +1045,10 @@ export default function App() {
                                   {/* VALUE & DELETE COMMAND */}
                                   <div className="flex items-center space-x-3 shrink-0 pl-1 select-none font-sans">
                                     <div className="text-right">
-                                      <span className="text-base font-extrabold text-neutral-900 block tracking-tight">
+                                      <span className="text-base font-extrabold text-[var(--color-text)] block tracking-tight">
                                         {currency} {expense.amount.toFixed(2)}
                                       </span>
-                                      <span className="text-[10px] text-neutral-400 font-mono block">
+                                      <span className="text-[10px] text-[var(--color-text-secondary)]/70 font-mono block">
                                         {expense.date}
                                       </span>
                                     </div>
@@ -1061,7 +1061,7 @@ export default function App() {
                                         setIsModalOpen(true);
                                       }}
                                       title="编辑此笔消费"
-                                      className="p-2 bg-neutral-50 text-neutral-400 hover:text-white hover:bg-neutral-900 rounded-full transition-colors cursor-pointer"
+                                      className="p-2 bg-[var(--color-input-bg)] border border-[var(--color-input-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text)] hover:bg-[var(--color-card-solid)] rounded-full transition-all cursor-pointer active:scale-[0.9]"
                                     >
                                       <Icons.Edit2 size={13} strokeWidth={2.5} />
                                     </button>
@@ -1071,7 +1071,7 @@ export default function App() {
                                       id={`delete-btn-${expense.id}`}
                                       onClick={() => handleDeleteExpense(expense.id, `${expense.category}: ¥${expense.amount}`)}
                                       title="删除此笔消费"
-                                      className="p-2 bg-neutral-50 text-neutral-400 hover:text-white hover:bg-neutral-900 rounded-full transition-colors cursor-pointer"
+                                      className="p-2 bg-[var(--color-input-bg)] border border-[var(--color-input-border)] text-[var(--color-text-secondary)] hover:text-red-500 hover:bg-[var(--color-card-solid)] rounded-full transition-all cursor-pointer active:scale-[0.9]"
                                     >
                                       <Icons.Trash2 size={13} strokeWidth={2.5} />
                                     </button>
@@ -1177,7 +1177,7 @@ export default function App() {
                           {/* Date Header + Date Total */}
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                              <span className="w-1.5 h-3.5 rounded-full bg-[#FBCFE8]" />
+                              <span className="w-1.5 h-3.5 rounded-full bg-[var(--color-accent)]" />
                               <span className="text-sm font-extrabold text-neutral-800">
                                 {formatChineseDate(group.date)}
                               </span>
@@ -1469,7 +1469,7 @@ export default function App() {
                 
                 <div className="border-b border-neutral-100 pb-4">
                   <h2 className="text-lg font-black text-neutral-900 flex items-center gap-2">
-                    <Icons.Settings className="text-[#FBCFE8]" size={20} />
+                    <Icons.Settings className="text-[var(--color-accent)]" size={20} />
                     系统偏好设置中心
                   </h2>
                   <p className="text-xs text-neutral-400 mt-1">定制极简账本的运作货币、消费上限与分类名录</p>
@@ -1502,8 +1502,8 @@ export default function App() {
                           }}
                           className={`flex flex-col items-start p-3.5 rounded-2xl border-2 transition-all cursor-pointer text-left ${
                             isSelected
-                              ? 'border-black bg-black text-white shadow-md'
-                              : 'border-neutral-200 bg-white text-neutral-700 hover:border-neutral-350 hover:bg-neutral-50'
+                              ? 'border-black bg-black text-[var(--color-btn-primary-text)] shadow-md'
+                              : 'border-[var(--color-card-border)] bg-[var(--color-card)] text-[var(--color-text-secondary)] hover:border-[var(--color-accent)]/40 hover:bg-[var(--color-input-bg)]'
                           }`}
                         >
                           <span className="text-sm font-mono font-black">{cur.symbol}</span>
@@ -1560,8 +1560,8 @@ export default function App() {
                           }}
                           className={`flex flex-col items-start p-3.5 rounded-2xl border-2 transition-all cursor-pointer text-left ${
                             isSelected
-                              ? 'border-black bg-black text-white shadow-md'
-                              : 'border-neutral-200 bg-white text-neutral-700 hover:border-neutral-350 hover:bg-neutral-50'
+                              ? 'border-black bg-black text-[var(--color-btn-primary-text)] shadow-md'
+                              : 'border-[var(--color-card-border)] bg-[var(--color-card)] text-[var(--color-text-secondary)] hover:border-[var(--color-accent)]/40 hover:bg-[var(--color-input-bg)]'
                           }`}
                         >
                           <div className="flex items-center justify-between w-full">
@@ -1717,7 +1717,7 @@ export default function App() {
                       onClick={() => {
                         loadDefaultSeedData();
                       }}
-                      className="flex items-center justify-center gap-2 bg-[#FBCFE8]/20 hover:bg-[#FBCFE8]/40 border border-[#FBCFE8] text-neutral-955 py-3 rounded-2xl text-xs font-extrabold cursor-pointer transition-all active:scale-[0.98]"
+                      className="flex items-center justify-center gap-2 bg-[var(--color-accent)]/20 hover:bg-[var(--color-accent)]/40 border border-[var(--color-accent)] text-[var(--color-text)] py-3 rounded-2xl text-xs font-extrabold cursor-pointer transition-all active:scale-[0.98]"
                     >
                       <Icons.RotateCcw size={13} />
                       恢复默认示例数据
@@ -1755,9 +1755,10 @@ export default function App() {
               setActiveTab(0);
               localStorage.setItem('activeTab', '0');
             }}
-            className={`p-2.5 rounded-full cursor-pointer transition-colors ${
+            style={activeTab === 0 ? { color: 'var(--color-accent)', backgroundColor: 'rgba(255,255,255,0.12)' } : {}}
+            className={`p-2.5 rounded-full cursor-pointer transition-all ${
               activeTab === 0 
-                ? 'text-[#FBCFE8] bg-white/10' 
+                ? '' 
                 : 'text-neutral-400 hover:text-white hover:bg-white/5'
             }`}
             title="控制台主页"
@@ -1772,9 +1773,10 @@ export default function App() {
               localStorage.setItem('activeTab', '1');
               setFilterMonthOnly(true);
             }}
-            className={`p-2.5 rounded-full cursor-pointer transition-colors ${
+            style={activeTab === 1 ? { color: 'var(--color-accent)', backgroundColor: 'rgba(255,255,255,0.12)' } : {}}
+            className={`p-2.5 rounded-full cursor-pointer transition-all ${
               activeTab === 1 
-                ? 'text-[#FBCFE8] bg-white/10' 
+                ? '' 
                 : 'text-neutral-400 hover:text-white hover:bg-white/5'
             }`}
             title="本月账单"
@@ -1788,10 +1790,11 @@ export default function App() {
           <button
             id="overlap-plus-trigger-btn"
             onClick={() => setIsModalOpen(true)}
-            className="absolute -top-10 w-14 h-14 bg-[#FBCFE8] hover:bg-[#fad2e1] border-[3px] border-neutral-900 text-black rounded-full flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all text-neutral-900 font-bold cursor-pointer pointer-events-auto"
+            style={{ backgroundColor: 'var(--color-accent)' }}
+            className="absolute -top-10 w-14 h-14 border-[3px] border-[var(--color-bg)] rounded-full flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all font-bold cursor-pointer pointer-events-auto"
             title="记一笔"
           >
-            <Icons.Plus size={26} strokeWidth={3} className="text-black" />
+            <Icons.Plus size={26} strokeWidth={3} style={{ color: 'var(--color-accent-text)' }} />
           </button>
         </div>
 
@@ -1803,9 +1806,10 @@ export default function App() {
               setActiveTab(2);
               localStorage.setItem('activeTab', '2');
             }}
-            className={`p-2.5 rounded-full cursor-pointer transition-colors ${
+            style={activeTab === 2 ? { color: 'var(--color-accent)', backgroundColor: 'rgba(255,255,255,0.12)' } : {}}
+            className={`p-2.5 rounded-full cursor-pointer transition-all ${
               activeTab === 2 
-                ? 'text-[#FBCFE8] bg-white/10' 
+                ? '' 
                 : 'text-neutral-400 hover:text-white hover:bg-white/5'
             }`}
             title="消费明细"
@@ -1819,9 +1823,10 @@ export default function App() {
               setActiveTab(3);
               localStorage.setItem('activeTab', '3');
             }}
-            className={`p-2.5 rounded-full cursor-pointer transition-colors ${
+            style={activeTab === 3 ? { color: 'var(--color-accent)', backgroundColor: 'rgba(255,255,255,0.12)' } : {}}
+            className={`p-2.5 rounded-full cursor-pointer transition-all ${
               activeTab === 3 
-                ? 'text-[#FBCFE8] bg-white/10' 
+                ? '' 
                 : 'text-neutral-400 hover:text-white hover:bg-white/5'
             }`}
             title="系统设置"
@@ -2025,9 +2030,9 @@ export default function App() {
                     handleClearAllData();
                     setIsResetConfirmOpen(false);
                   }}
-                  className="w-full bg-[#1a1a1a] text-white py-3.5 rounded-full font-bold flex items-center justify-center gap-2 hover:bg-black active:scale-[0.98] transition-all cursor-pointer shadow-md opacity-100 hover:opacity-90"
+                  className="w-full bg-[var(--color-btn-primary)] text-[var(--color-btn-primary-text)] py-3.5 rounded-full font-bold flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer shadow-md"
                 >
-                  <Icons.Trash2 size={16} strokeWidth={2.5} className="text-[#FBCFE8]" />
+                  <Icons.Trash2 size={16} strokeWidth={2.5} className="text-[var(--color-accent)]" />
                   彻底清空账本 (全新空白账单)
                 </button>
 
@@ -2038,7 +2043,7 @@ export default function App() {
                     loadDefaultSeedData();
                     setIsResetConfirmOpen(false);
                   }}
-                  className="w-full bg-[#FBCFE8] text-neutral-900 py-3.5 rounded-full font-bold flex items-center justify-center gap-2 hover:bg-[#fad2e1] active:scale-[0.98] transition-all cursor-pointer border border-black/10 shadow-sm"
+                  className="w-full bg-[var(--color-accent)] text-[var(--color-accent-text)] py-3.5 rounded-full font-bold flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer border border-black/10 shadow-sm"
                 >
                   <Icons.RotateCcw size={16} strokeWidth={2.5} />
                   重置并载入演示数据 (含有历史明细)
@@ -2087,7 +2092,7 @@ export default function App() {
 
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-extrabold text-neutral-900 flex items-center gap-2">
-                  <span className="inline-block w-3 h-3 bg-[#FBCFE8] rounded-full animate-bounce" />
+                  <span className="inline-block w-3 h-3 bg-[var(--color-accent)] rounded-full animate-bounce" />
                   账本设置 & 货币符号
                 </h3>
                 <button
@@ -2123,8 +2128,8 @@ export default function App() {
                           }}
                           className={`flex flex-col items-start p-3 rounded-2xl border-2 transition-all cursor-pointer text-left ${
                             isSelected
-                              ? 'border-black bg-black text-white shadow-md'
-                              : 'border-neutral-200 bg-white text-neutral-700 hover:border-neutral-350 hover:bg-neutral-50'
+                              ? 'border-black bg-black text-[var(--color-btn-primary-text)] shadow-md'
+                              : 'border-[var(--color-card-border)] bg-[var(--color-card)] text-[var(--color-text-secondary)] hover:border-[var(--color-accent)]/40 hover:bg-[var(--color-input-bg)]'
                           }`}
                         >
                           <span className="text-xs font-mono font-black">{cur.symbol}</span>
@@ -2163,8 +2168,8 @@ export default function App() {
                           }}
                           className={`flex items-center gap-1.5 p-2 rounded-xl border transition-all cursor-pointer text-left ${
                             isSelected
-                              ? 'border-black bg-black text-white shadow-xs'
-                              : 'border-neutral-200 bg-white text-neutral-700 hover:border-neutral-350 hover:bg-white/50'
+                              ? 'border-black bg-black text-[var(--color-btn-primary-text)] shadow-xs'
+                              : 'border-[var(--color-card-border)] bg-[var(--color-card)] text-[var(--color-text-secondary)] hover:border-[var(--color-accent)]/40 hover:bg-[var(--color-input-bg)]'
                           }`}
                         >
                           <span className={`w-3.5 h-3.5 rounded-full border border-neutral-300 flex-shrink-0 ${t.previewColor}`} />

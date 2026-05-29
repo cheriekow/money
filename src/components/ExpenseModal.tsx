@@ -184,7 +184,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-xl font-bold text-neutral-900 flex items-center gap-2">
-            <span className="inline-block w-3 h-3 bg-[#FBCFE8] rounded-full" />
+            <span className="inline-block w-3 h-3 bg-[var(--color-accent)] rounded-full" />
             {editingExpense ? '编辑账目' : '新增记账'}
           </h3>
           <button
@@ -276,7 +276,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                         isDeleteMode
                           ? 'border-red-300 hover:border-red-500 bg-red-50/20 text-red-900'
                           : isSelected
-                          ? 'border-black bg-black text-white shadow-md'
+                          ? 'border-black bg-black text-[var(--color-btn-primary-text)] shadow-md'
                           : 'border-neutral-200 bg-white text-neutral-700 hover:border-neutral-350'
                       }`}
                     >
@@ -399,7 +399,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                           onClick={() => setSelectedIcon(ic.iconName)}
                           className={`p-1.5 rounded-xl border transition-all cursor-pointer ${
                             isSelected
-                              ? 'bg-black text-white border-black'
+                              ? 'bg-black text-[var(--color-btn-primary-text)] border-black'
                               : 'bg-white text-neutral-705 border-neutral-200 hover:border-neutral-350'
                           }`}
                           title={ic.label}
@@ -415,7 +415,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
                 <button
                   type="button"
                   onClick={handleCreateCategory}
-                  className="w-full bg-[#FAECEC] hover:bg-[#F3CFCF] text-neutral-900 py-2 rounded-full text-xs font-bold transition-all border border-black/10 flex items-center justify-center gap-1 cursor-pointer active:scale-95 mt-1"
+                  className="w-full bg-[var(--color-accent)]/20 hover:bg-[var(--color-accent)]/30 text-[var(--color-text)] py-2 rounded-full text-xs font-bold transition-all border border-black/10 flex items-center justify-center gap-1 cursor-pointer active:scale-95 mt-1"
                 >
                   <Icons.Plus size={14} strokeWidth={2.5} />
                   确认创建此分类
@@ -471,7 +471,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
           <button
             id="submit-expense-btn"
             type="submit"
-            className="w-full bg-black text-white py-3 rounded-full font-bold flex items-center justify-center gap-2 hover:bg-neutral-850 active:scale-[0.98] transition-all cursor-pointer shadow-lg mt-2 text-sm"
+            className="w-full bg-black text-[var(--color-btn-primary-text)] py-3 rounded-full font-bold flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer shadow-lg mt-2 text-sm"
           >
             <Icons.Check size={18} strokeWidth={3} />
             保存记录
