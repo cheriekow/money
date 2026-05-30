@@ -9,6 +9,7 @@ interface RingChartProps {
   onSelectCategory: (category: CategoryType | null) => void;
   categories: Record<string, CategoryInfo>;
   currency: string;
+  title?: string;
 }
 
 export const RingChart: React.FC<RingChartProps> = ({
@@ -18,6 +19,7 @@ export const RingChart: React.FC<RingChartProps> = ({
   onSelectCategory,
   categories,
   currency,
+  title,
 }) => {
   const cx = 150;
   const cy = 150;
@@ -96,7 +98,7 @@ export const RingChart: React.FC<RingChartProps> = ({
           onClick={() => onSelectCategory(null)}
           className="cursor-pointer text-center flex flex-col items-center justify-center transition-transform active:scale-95"
         >
-          <span className="text-xs text-neutral-500 font-medium tracking-wide">本月总支出</span>
+          <span className="text-xs text-neutral-500 font-medium tracking-wide">{title || '本月总支出'}</span>
           <span className="text-3xl font-extrabold text-neutral-900 tracking-tight mt-1 flex items-baseline justify-center">
             <span className="text-sm font-black mr-0.5 self-center">{currency}</span>
             <span>{totalAmount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>

@@ -742,12 +742,23 @@ export default function App() {
           <div className="flex items-center gap-2">
             <button
               id="currency-setting-btn"
-              onClick={() => setIsSettingOpen(true)}
-              title="货币设置"
-              className="w-9 h-9 border border-neutral-300 hover:border-black rounded-full flex items-center justify-center text-neutral-600 hover:text-black transition-all cursor-pointer bg-white shadow-xs hover:bg-white relative hover:scale-[1.05] active:scale-[0.95]"
+              onClick={() => {
+                setActiveTab(4);
+                localStorage.setItem('activeTab', '4');
+              }}
+              title="系统偏好设置"
+              className={`w-9 h-9 border rounded-full flex items-center justify-center transition-all cursor-pointer relative hover:scale-[1.05] active:scale-[0.95] ${
+                activeTab === 4
+                  ? 'border-black bg-black text-white'
+                  : 'border-neutral-300 hover:border-black text-neutral-600 bg-white hover:bg-white shadow-xs'
+              }`}
             >
               <Icons.Settings size={15} />
-              <span className="absolute -top-1.5 -right-1.5 bg-black text-[var(--color-btn-primary-text)] text-[8px] font-black w-5 h-5 rounded-full flex items-center justify-center border border-white/80 shadow-md transform scale-90">
+              <span className={`absolute -top-1.5 -right-1.5 text-[8px] font-black w-5 h-5 rounded-full flex items-center justify-center border border-white/80 shadow-md transform scale-90 ${
+                activeTab === 4
+                  ? 'bg-[var(--color-accent)] text-[var(--color-accent-text)]'
+                  : 'bg-black text-[var(--color-btn-primary-text)]'
+              }`}>
                 {currency}
               </span>
             </button>
@@ -1448,7 +1459,7 @@ export default function App() {
                 </div>
 
                 {/* Substats */}
-                <div className="w-full border-t border-dashed border-neutral-200 mt-4 pt-3.5 flex flex-col gap-3 select-none">
+                <div className="w-full border-t border-dashed border-neutral-200 mt-4 pt-3.5 select-none">
                   <div className="flex justify-around text-center">
                     <div>
                       <span className="block text-[10px] uppercase font-bold text-neutral-400">本月支出</span>
@@ -1458,20 +1469,6 @@ export default function App() {
                     <div>
                       <span className="block text-[10px] uppercase font-bold text-neutral-400">总计支出额</span>
                       <span className="text-sm font-black text-neutral-900 font-mono text-[#e06666]">{currency}{(currentMonthExpenses.reduce((sum, e) => sum + e.amount, 0) + virtualFixedExpensesForThisMonth.reduce((sum, e) => sum + e.amount, 0)).toFixed(2)}</span>
-                    </div>
-                  </div>
-                  {/* Income & Net row */}
-                  <div className="flex justify-around text-center border-t border-dashed border-emerald-100 pt-3">
-                    <div>
-                      <span className="block text-[10px] uppercase font-bold text-emerald-500">本月收入</span>
-                      <span className="text-sm font-black text-emerald-600 font-mono">+{currency}{displayTotalIncome.toFixed(2)}</span>
-                    </div>
-                    <div className="border-r border-neutral-200" />
-                    <div>
-                      <span className="block text-[10px] uppercase font-bold text-neutral-400">收支净余</span>
-                      <span className={`text-sm font-black font-mono ${(displayTotalIncome - displayTotal) >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                        {(displayTotalIncome - displayTotal) >= 0 ? '+' : ''}{currency}{(displayTotalIncome - displayTotal).toFixed(2)}
-                      </span>
                     </div>
                   </div>
                 </div>
@@ -1624,6 +1621,7 @@ export default function App() {
                     onSelectCategory={setSelectedIncomeCategory}
                     categories={incomeCategories}
                     currency={currency}
+                    title="本月总收入"
                   />
                 </div>
                 {selectedIncomeCategory && (
@@ -2354,7 +2352,7 @@ export default function App() {
           </button>
         </div>
 
-        {/* Right portions of actions (Tabs 2, 3, 4) */}
+        {/* Right portions of actions (Tabs 2, 3) */}
         <div className="flex items-center justify-around flex-1">
           <button
             id="footer-income-tab"
@@ -2388,23 +2386,6 @@ export default function App() {
             title="消费明细"
           >
             <Icons.CalendarCheck size={18} strokeWidth={2.5} />
-          </button>
-
-          <button
-            id="footer-settings-tab"
-            onClick={() => {
-              setActiveTab(4);
-              localStorage.setItem('activeTab', '4');
-            }}
-            style={activeTab === 4 ? { color: 'var(--color-accent)', backgroundColor: 'rgba(255,255,255,0.12)' } : {}}
-            className={`p-2.5 rounded-full cursor-pointer transition-all ${
-              activeTab === 4
-                ? ''
-                : 'text-neutral-400 hover:text-white hover:bg-white/5'
-            }`}
-            title="系统设置"
-          >
-            <Icons.Settings size={18} strokeWidth={2.5} />
           </button>
         </div>
 
