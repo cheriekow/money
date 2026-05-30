@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import * as Icons from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { DEFAULT_CATEGORIES, CategoryInfo, CategoryType, Expense, FixedExpense } from './types';
+import { DEFAULT_CATEGORIES, DEFAULT_INCOME_CATEGORIES, CategoryInfo, CategoryType, Expense, FixedExpense, Income, FixedIncome } from './types';
 import { INITIAL_EXPENSES } from './seedData';
 import { RingChart } from './components/RingChart';
 import { ExpenseModal } from './components/ExpenseModal';
 import { FixedExpenseModal } from './components/FixedExpenseModal';
+import { FixedIncomeModal } from './components/FixedIncomeModal';
 
 export default function App() {
   // --- STATE ---
@@ -28,6 +29,40 @@ export default function App() {
   }, [fixedExpenses]);
 
   const [isFixedManagerOpen, setIsFixedManagerOpen] = useState(false);
+
+  // ── INCOME STATE ────────────────────────────────────────────────────────────
+  const [incomes, setIncomes] = useState<Income[]>(() => {
+    const saved = localStorage.getItem('incomes');
+    if (saved) { try { return JSON.parse(saved); } catch (e) { console.error(e); } }
+    return [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('incomes', JSON.stringify(incomes));
+  }, [incomes]);
+
+  const [incomeCategories, setIncomeCategories] = useState<Record<string, CategoryInfo>>(() => {
+    const saved = localStorage.getItem('income_categories');
+    if (saved) { try { return JSON.parse(saved); } catch (e) { console.error(e); } }
+    return { ...DEFAULT_INCOME_CATEGORIES };
+  });
+
+  useEffect(() => {
+    localStorage.setItem('income_categories', JSON.stringify(incomeCategories));
+  }, [incomeCategories]);
+
+  const [fixedIncomes, setFixedIncomes] = useState<FixedIncome[]>(() => {
+    const saved = localStorage.getItem('fixed_incomes');
+    if (saved) { try { return JSON.parse(saved); } catch (e) { console.error(e); } }
+    return [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('fixed_incomes', JSON.stringify(fixedIncomes));
+  }, [fixedIncomes]);
+
+  const [isFixedIncomeManagerOpen, setIsFixedIncomeManagerOpen] = useState(false);
+  const [editingIncome, setEditingIncome] = useState<Income | null>(null);
   
   // Custom expandable Categories Map state
   const [categories, setCategories] = useState<Record<string, CategoryInfo>>(() => {
@@ -57,6 +92,7 @@ export default function App() {
   });
 
   const [selectedCategory, setSelectedCategory] = useState<CategoryType | null>(null);
+  const [selectedIncomeCategory, setSelectedIncomeCategory] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
   const [feedbackMsg, setFeedbackMsg] = useState<{ text: string; type: 'success' | 'info' } | null>(null);
@@ -137,6 +173,50 @@ export default function App() {
         fixedId: fe.id
       } as Expense & { isFixed: boolean; fixedId: string }));
   }, [fixedExpenses, currentMonthStr]);
+
+  // Virtual fixed incomes auto-generated for the selected month
+  const virtualFixedIncomesForThisMonth = useMemo(() => {
+    return fixedIncomes
+      .filter(fi => fi.autoInclude)
+      .map(fi => ({
+        id: `fixed-inc-${fi.id}-${currentMonthStr}`,
+        amount: fi.amount,
+        category: fi.category,
+        date: `${currentMonthStr}-${String(fi.dayOfMonth).padStart(2, '0')}`,
+        note: fi.note ? `${fi.name} (${fi.note})` : fi.name,
+      } as Income));
+  }, [fixedIncomes, currentMonthStr]);
+
+  // Current-month real incomes
+  const currentMonthIncomes = useMemo(() => {
+    return incomes.filter(i => i.date.startsWith(currentMonthStr));
+  }, [incomes, currentMonthStr]);
+
+  // Total income for selected month (real + virtual fixed)
+  const displayTotalIncome = useMemo(() => {
+    const realTotal = currentMonthIncomes.reduce((s, i) => s + i.amount, 0);
+    const fixedTotal = virtualFixedIncomesForThisMonth.reduce((s, i) => s + i.amount, 0);
+    return realTotal + fixedTotal;
+  }, [currentMonthIncomes, virtualFixedIncomesForThisMonth]);
+
+  // Income totals per category for ring chart
+  const incomeCategoryTotals = useMemo(() => {
+    const totals: Record<string, number> = {};
+    Object.keys(incomeCategories).forEach(k => { totals[k] = 0; });
+    [...currentMonthIncomes, ...virtualFixedIncomesForThisMonth].forEach(i => {
+      totals[i.category] = (totals[i.category] || 0) + i.amount;
+    });
+    return totals;
+  }, [currentMonthIncomes, virtualFixedIncomesForThisMonth, incomeCategories]);
+
+  // Filtered income list for display in Tab 2
+  const filteredIncomes = useMemo(() => {
+    let list = [...currentMonthIncomes, ...virtualFixedIncomesForThisMonth];
+    if (selectedIncomeCategory) {
+      list = list.filter(i => i.category === selectedIncomeCategory);
+    }
+    return list.sort((a, b) => b.date.localeCompare(a.date));
+  }, [currentMonthIncomes, virtualFixedIncomesForThisMonth, selectedIncomeCategory]);
 
   // Sync Input and Budget Status
   useEffect(() => {
@@ -460,6 +540,83 @@ export default function App() {
       setSelectedCategory(null);
     }
     triggerFeedback(`分类【${catName}】已成功删除！`, 'info');
+  };
+
+  // ── INCOME HANDLERS ─────────────────────────────────────────────────────────
+  const saveIncomes = (next: Income[]) => {
+    setIncomes(next);
+    localStorage.setItem('incomes', JSON.stringify(next));
+  };
+
+  const handleAddIncome = (income: Omit<Income, 'id'>, isFixedIncomeRule?: boolean) => {
+    const created: Income = {
+      ...income,
+      id: `inc-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+    };
+    saveIncomes([created, ...incomes]);
+
+    if (isFixedIncomeRule) {
+      let dayVal = 1;
+      try {
+        const parts = income.date.split('-');
+        if (parts.length === 3) dayVal = parseInt(parts[2], 10);
+      } catch (e) { console.error(e); }
+      const newRule: FixedIncome = {
+        id: `fixed-inc-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+        name: income.note || `${income.category}固定收入`,
+        amount: income.amount,
+        category: income.category,
+        dayOfMonth: dayVal,
+        autoInclude: true,
+        note: income.note,
+      };
+      setFixedIncomes([newRule, ...fixedIncomes]);
+      triggerFeedback(`已记录收入，并自动创建每月固定收入规则！`, 'success');
+    } else {
+      triggerFeedback(`已成功记录收入 ${currency}${income.amount.toFixed(2)}！`, 'success');
+    }
+  };
+
+  const handleEditIncome = (id: string, updated: Omit<Income, 'id'>) => {
+    const next = incomes.map(i => i.id === id ? { ...i, ...updated } : i);
+    saveIncomes(next);
+    triggerFeedback('收入记录已更新！', 'success');
+    setEditingIncome(null);
+  };
+
+  const handleDeleteIncome = (id: string, label: string) => {
+    saveIncomes(incomes.filter(i => i.id !== id));
+    triggerFeedback(`已删除收入【${label}】`, 'info');
+  };
+
+  const handleAddIncomeCategory = (newCat: CategoryInfo) => {
+    const updated = { ...incomeCategories, [newCat.name]: newCat };
+    setIncomeCategories(updated);
+    triggerFeedback(`收入分类【${newCat.name}】创建成功！`, 'success');
+  };
+
+  const handleDeleteIncomeCategory = (catName: string) => {
+    const updated = { ...incomeCategories };
+    delete updated[catName];
+    setIncomeCategories(updated);
+    triggerFeedback(`收入分类【${catName}】已删除！`, 'info');
+  };
+
+  const handleAddFixedIncomeRule = (rule: Omit<FixedIncome, 'id'>) => {
+    const id = `fixed-inc-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`;
+    setFixedIncomes([{ ...rule, id }, ...fixedIncomes]);
+    triggerFeedback(`固定收入规则【${rule.name}】创建成功！`, 'success');
+  };
+
+  const handleEditFixedIncomeRule = (id: string, updated: Omit<FixedIncome, 'id'>) => {
+    setFixedIncomes(fixedIncomes.map(r => r.id === id ? { ...updated, id } : r));
+    triggerFeedback(`规则【${updated.name}】已成功更新！`, 'success');
+  };
+
+  const handleDeleteFixedIncomeRule = (id: string) => {
+    const rule = fixedIncomes.find(r => r.id === id);
+    setFixedIncomes(fixedIncomes.filter(r => r.id !== id));
+    triggerFeedback(`固定收入规则【${rule?.name || ''}】已删除！`, 'info');
   };
 
   // Filter actual list of transactions displayed at the bottom
@@ -822,32 +979,55 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* 首页固定开销摘要卡片 (Dashboard Fixed Expenses summary widget) */}
-                <div 
-                  onClick={() => setIsFixedManagerOpen(true)}
-                  className="bg-white/85 border border-white/55 backdrop-blur-sm p-4.5 rounded-[28px] shadow-xs hover:border-[var(--color-accent)]/55 hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer flex items-center justify-between animate-fade-in"
-                  id="dashboard-fixed-expenses-banner"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-[var(--color-accent)]/15 flex items-center justify-center text-[var(--color-text)]">
-                      <Icons.CalendarClock size={18} className="animate-pulse" />
+                {/* 首页固定收入 + 月度收入 摘要卡片 */}
+                <div className="flex flex-col gap-2">
+                  {/* Fixed Income banner */}
+                  <div
+                    onClick={() => setIsFixedIncomeManagerOpen(true)}
+                    className="bg-emerald-50/80 border border-emerald-200/60 backdrop-blur-sm px-4 py-3.5 rounded-[24px] shadow-xs hover:border-emerald-400/60 hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer flex items-center justify-between animate-fade-in"
+                    id="dashboard-fixed-incomes-banner"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
+                        <Icons.TrendingUp size={16} />
+                      </div>
+                      <div className="text-left">
+                        <span className="text-xs font-black text-emerald-900 block">每月固定收入</span>
+                        <span className="text-[10px] text-emerald-700/70 font-medium">
+                          共 {fixedIncomes.length} 项规则 · {fixedIncomes.filter(fi => fi.autoInclude).length} 项自动计入
+                        </span>
+                      </div>
                     </div>
-                    <div className="text-left">
-                      <span className="text-xs font-black text-[var(--color-text)] block">
-                        每月固定开销
+                    <div className="text-right shrink-0">
+                      <span className="text-sm font-extrabold text-emerald-700 block font-mono">
+                        +{currency}{fixedIncomes.filter(fi => fi.autoInclude).reduce((s, fi) => s + fi.amount, 0).toFixed(2)}
                       </span>
-                      <span className="text-[10px] text-[var(--color-text-secondary)] font-medium font-sans">
-                        共 {fixedExpenses.length} 项规则 · {fixedExpenses.filter(fe => fe.autoInclude).length} 项自动计入当月
+                      <span className="text-[8px] text-emerald-600/70 font-semibold block flex items-center gap-0.5 justify-end">
+                        管理规则 <Icons.ChevronRight size={8} />
                       </span>
                     </div>
                   </div>
-                  <div className="text-right shrink-0">
-                    <span className="text-sm font-extrabold text-[var(--color-text)] block font-mono">
-                      {currency} {(fixedExpenses.filter(fe => fe.autoInclude).reduce((sum, fe) => sum + fe.amount, 0)).toFixed(2)}
-                    </span>
-                    <span className="text-[8px] text-[var(--color-text-secondary)]/70 font-semibold block flex items-center gap-0.5 justify-end">
-                      管理规则 <Icons.ChevronRight size={8} />
-                    </span>
+
+                  {/* Month income vs expense quick comparison */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-emerald-50/70 border border-emerald-200/50 rounded-[20px] p-3 flex flex-col gap-1">
+                      <span className="text-[9px] font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-1">
+                        <Icons.ArrowDownCircle size={10} /> 本月收入
+                      </span>
+                      <span className="text-base font-extrabold text-emerald-700 font-mono">{currency}{displayTotalIncome.toFixed(0)}</span>
+                      <span className="text-[9px] text-emerald-600/60">{currentMonthIncomes.length + virtualFixedIncomesForThisMonth.length} 笔</span>
+                    </div>
+                    <div className={`rounded-[20px] p-3 flex flex-col gap-1 border ${(displayTotalIncome - displayTotal) >= 0 ? 'bg-emerald-50/70 border-emerald-200/50' : 'bg-red-50/70 border-red-200/50'}`}>
+                      <span className={`text-[9px] font-bold uppercase tracking-wider flex items-center gap-1 ${(displayTotalIncome - displayTotal) >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>
+                        <Icons.Scale size={10} /> 收支净余
+                      </span>
+                      <span className={`text-base font-extrabold font-mono ${(displayTotalIncome - displayTotal) >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>
+                        {(displayTotalIncome - displayTotal) >= 0 ? '+' : ''}{currency}{(displayTotalIncome - displayTotal).toFixed(0)}
+                      </span>
+                      <span className={`text-[9px] ${(displayTotalIncome - displayTotal) >= 0 ? 'text-emerald-600/60' : 'text-red-500/60'}`}>
+                        {(displayTotalIncome - displayTotal) >= 0 ? '收支盈余' : '入不敷出'}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
@@ -1268,15 +1448,31 @@ export default function App() {
                 </div>
 
                 {/* Substats */}
-                <div className="w-full border-t border-dashed border-neutral-200 mt-4 pt-3.5 flex justify-around text-center select-none">
-                  <div>
-                    <span className="block text-[10px] uppercase font-bold text-neutral-400">本月支出</span>
-                    <span className="text-sm font-black text-neutral-800 font-mono">{currentMonthExpenses.length + virtualFixedExpensesForThisMonth.length} 笔</span>
+                <div className="w-full border-t border-dashed border-neutral-200 mt-4 pt-3.5 flex flex-col gap-3 select-none">
+                  <div className="flex justify-around text-center">
+                    <div>
+                      <span className="block text-[10px] uppercase font-bold text-neutral-400">本月支出</span>
+                      <span className="text-sm font-black text-neutral-800 font-mono">{currentMonthExpenses.length + virtualFixedExpensesForThisMonth.length} 笔</span>
+                    </div>
+                    <div className="border-r border-neutral-200" />
+                    <div>
+                      <span className="block text-[10px] uppercase font-bold text-neutral-400">总计支出额</span>
+                      <span className="text-sm font-black text-neutral-900 font-mono text-[#e06666]">{currency}{(currentMonthExpenses.reduce((sum, e) => sum + e.amount, 0) + virtualFixedExpensesForThisMonth.reduce((sum, e) => sum + e.amount, 0)).toFixed(2)}</span>
+                    </div>
                   </div>
-                  <div className="border-r border-neutral-200" />
-                  <div>
-                    <span className="block text-[10px] uppercase font-bold text-neutral-400">总计支出额</span>
-                    <span className="text-sm font-black text-neutral-900 font-mono text-[#e06666]">{currency}{(currentMonthExpenses.reduce((sum, e) => sum + e.amount, 0) + virtualFixedExpensesForThisMonth.reduce((sum, e) => sum + e.amount, 0)).toFixed(2)}</span>
+                  {/* Income & Net row */}
+                  <div className="flex justify-around text-center border-t border-dashed border-emerald-100 pt-3">
+                    <div>
+                      <span className="block text-[10px] uppercase font-bold text-emerald-500">本月收入</span>
+                      <span className="text-sm font-black text-emerald-600 font-mono">+{currency}{displayTotalIncome.toFixed(2)}</span>
+                    </div>
+                    <div className="border-r border-neutral-200" />
+                    <div>
+                      <span className="block text-[10px] uppercase font-bold text-neutral-400">收支净余</span>
+                      <span className={`text-sm font-black font-mono ${(displayTotalIncome - displayTotal) >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                        {(displayTotalIncome - displayTotal) >= 0 ? '+' : ''}{currency}{(displayTotalIncome - displayTotal).toFixed(2)}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1377,6 +1573,183 @@ export default function App() {
           )}
 
           {activeTab === 2 && (
+            <motion.div
+              key="tab-income"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.2 }}
+              className="max-w-xl mx-auto w-full flex flex-col gap-5 md:gap-6"
+            >
+              {/* Income Summary Header */}
+              <div className="bg-emerald-50/80 border border-emerald-200/50 backdrop-blur-sm rounded-[32px] p-6 shadow-xs flex flex-col items-center">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 bg-emerald-100 px-2.5 py-0.5 rounded-full mb-3">本月收入明细</span>
+                <div className="text-4xl font-black text-emerald-700 tracking-tight font-mono">
+                  +{currency}{displayTotalIncome.toFixed(2)}
+                </div>
+                <p className="text-xs text-emerald-600/70 mt-2 font-medium">{displayDateTitle} · 共 {currentMonthIncomes.length + virtualFixedIncomesForThisMonth.length} 笔收入</p>
+
+                <div className="w-full border-t border-dashed border-emerald-200 mt-4 pt-3.5 flex justify-around text-center">
+                  <div>
+                    <span className="block text-[10px] uppercase font-bold text-emerald-400">手动记录</span>
+                    <span className="text-sm font-black text-emerald-700 font-mono">{currentMonthIncomes.length} 笔</span>
+                  </div>
+                  <div className="border-r border-emerald-100" />
+                  <div>
+                    <span className="block text-[10px] uppercase font-bold text-emerald-400">固定自动</span>
+                    <span className="text-sm font-black text-emerald-700 font-mono">{virtualFixedIncomesForThisMonth.length} 笔</span>
+                  </div>
+                  <div className="border-r border-emerald-100" />
+                  <div>
+                    <span className="block text-[10px] uppercase font-bold text-neutral-400">收支净余</span>
+                    <span className={`text-sm font-black font-mono ${(displayTotalIncome - displayTotal) >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                      {(displayTotalIncome - displayTotal) >= 0 ? '+' : ''}{currency}{(displayTotalIncome - displayTotal).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Income Ring Chart circular analysis */}
+              <div className="bg-white/80 border border-white/50 backdrop-blur-sm p-6 rounded-[32px] shadow-xs flex flex-col items-center justify-center relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-50/10 rounded-full blur-xl pointer-events-none" />
+                <div className="text-center mb-1">
+                  <h2 className="text-sm font-extrabold text-neutral-800 tracking-wider uppercase">收入轮盘 Analysis</h2>
+                  <p className="text-[10px] text-neutral-400 mt-0.5">点击轮盘或外圈分类可快速筛选</p>
+                </div>
+                <div className="w-full flex justify-center py-2">
+                  <RingChart
+                    totalAmount={displayTotalIncome}
+                    categoryTotals={incomeCategoryTotals}
+                    selectedCategory={selectedIncomeCategory}
+                    onSelectCategory={setSelectedIncomeCategory}
+                    categories={incomeCategories}
+                    currency={currency}
+                  />
+                </div>
+                {selectedIncomeCategory && (
+                  <button
+                    onClick={() => setSelectedIncomeCategory(null)}
+                    className="mt-2 text-xs font-bold text-neutral-500 hover:text-black flex items-center gap-1 bg-neutral-100 hover:bg-neutral-200 py-1 px-3 rounded-full transition-colors cursor-pointer"
+                  >
+                    <Icons.FilterX size={12} />
+                    显示全部收入类型
+                  </button>
+                )}
+              </div>
+
+              {/* Fixed Income quick-link */}
+              <div
+                onClick={() => setIsFixedIncomeManagerOpen(true)}
+                className="bg-white/85 border border-emerald-100 rounded-[24px] px-4 py-3.5 flex items-center justify-between cursor-pointer hover:border-emerald-300 hover:scale-[1.01] active:scale-[0.99] transition-all shadow-xs"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
+                    <Icons.RefreshCcw size={15} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-extrabold text-neutral-800">固定收入管理</p>
+                    <p className="text-[10px] text-neutral-500">{fixedIncomes.length} 条规则，点击管理</p>
+                  </div>
+                </div>
+                <Icons.ChevronRight size={14} className="text-emerald-500" />
+              </div>
+
+              {/* Income List */}
+              <div className="bg-white/80 border border-white/50 backdrop-blur-sm p-6 rounded-[32px] shadow-sm flex flex-col gap-4">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-black text-neutral-800 uppercase tracking-wider flex items-center gap-1.5">
+                    <Icons.TrendingUp size={14} className="text-emerald-500" />
+                    本月收入流水
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => { setIsModalOpen(true); }}
+                    className="flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-500 text-white hover:bg-emerald-600 cursor-pointer transition-colors"
+                  >
+                    <Icons.Plus size={10} strokeWidth={3} />
+                    记收入
+                  </button>
+                </div>
+
+                {[...currentMonthIncomes, ...virtualFixedIncomesForThisMonth].length === 0 ? (
+                  <div className="text-center py-16 bg-neutral-50/50 border border-dashed border-neutral-200 rounded-[24px]">
+                    <Icons.TrendingUp className="mx-auto text-neutral-300 mb-2" size={32} />
+                    <p className="text-xs font-extrabold text-neutral-400">本月暂无收入记录</p>
+                    <button
+                      onClick={() => setIsModalOpen(true)}
+                      className="mt-4 bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-bold px-3.5 py-2 rounded-full inline-flex items-center gap-1 cursor-pointer shadow-xs active:scale-95 transition-all"
+                    >
+                      <Icons.Plus size={11} strokeWidth={3} />
+                      立即记一笔收入
+                    </button>
+                  </div>
+                ) : filteredIncomes.length === 0 ? (
+                  <div className="text-center py-12 bg-neutral-50/50 border border-dashed border-neutral-205 rounded-[24px]">
+                    <Icons.FilterX className="mx-auto text-neutral-300 mb-2 animate-bounce" size={28} />
+                    <p className="text-xs font-extrabold text-neutral-450">暂无该分类的收入记录</p>
+                    <button
+                      onClick={() => setSelectedIncomeCategory(null)}
+                      className="mt-3 bg-neutral-900 hover:bg-black text-white text-[9px] font-bold px-3 py-1.5 rounded-full inline-flex items-center gap-1 cursor-pointer transition-all"
+                    >
+                      显示全部
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {filteredIncomes.map((item) => {
+                        const catInfo = incomeCategories[item.category] || { color: '#6EE7B7', iconName: 'Banknote', bgColor: 'bg-[#6EE7B7]/30' };
+                        const IconComp = (Icons as any)[catInfo.iconName] || Icons.Banknote;
+                        const isVirtual = item.id.startsWith('fixed-inc-');
+                        return (
+                          <motion.div
+                            key={item.id}
+                            layout
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="flex items-center gap-3 p-3 bg-emerald-50/40 border border-emerald-100/60 rounded-2xl"
+                          >
+                            <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${catInfo.bgColor}`}>
+                              <IconComp size={15} className="text-neutral-700" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs font-extrabold text-neutral-800">{item.category}</span>
+                                {isVirtual && (
+                                  <span className="text-[8px] bg-emerald-100 text-emerald-600 font-bold px-1.5 py-0.5 rounded-full">固定</span>
+                                )}
+                              </div>
+                              <span className="text-[10px] text-neutral-400">{formatChineseDate(item.date)}{item.note ? ` · ${item.note}` : ''}</span>
+                            </div>
+                            <span className="text-sm font-extrabold text-emerald-600 font-mono shrink-0">+{currency}{item.amount.toFixed(2)}</span>
+                            {!isVirtual && (
+                              <div className="flex gap-1 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => { setEditingIncome(item); setIsModalOpen(true); }}
+                                  className="p-1.5 bg-neutral-50 text-neutral-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-full cursor-pointer transition-colors"
+                                >
+                                  <Icons.Pencil size={12} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteIncome(item.id, `${item.category}:${currency}${item.amount}`)}
+                                  className="p-1.5 bg-neutral-50 text-neutral-400 hover:text-white hover:bg-neutral-900 rounded-full cursor-pointer transition-colors"
+                                >
+                                  <Icons.Trash2 size={12} strokeWidth={2.5} />
+                                </button>
+                              </div>
+                            )}
+                          </motion.div>
+                        );
+                      })}
+                  </div>
+                )}
+              </div>
+
+            </motion.div>
+          )}
+
+          {activeTab === 3 && (
             <motion.div
               key="tab-ledger"
               initial={{ opacity: 0, y: 15 }}
@@ -1594,7 +1967,7 @@ export default function App() {
             </motion.div>
           )}
 
-          {activeTab === 3 && (
+          {activeTab === 4 && (
             <motion.div
               key="tab-settings"
               initial={{ opacity: 0, y: 15 }}
@@ -1958,13 +2331,13 @@ export default function App() {
             }}
             style={activeTab === 1 ? { color: 'var(--color-accent)', backgroundColor: 'rgba(255,255,255,0.12)' } : {}}
             className={`p-2.5 rounded-full cursor-pointer transition-all ${
-              activeTab === 1 
-                ? '' 
+              activeTab === 1
+                ? ''
                 : 'text-neutral-400 hover:text-white hover:bg-white/5'
             }`}
             title="本月账单"
           >
-            <Icons.TrendingUp size={18} strokeWidth={2.5} />
+            <Icons.TrendingDown size={18} strokeWidth={2.5} />
           </button>
         </div>
 
@@ -1981,18 +2354,35 @@ export default function App() {
           </button>
         </div>
 
-        {/* Right portions of actions (Tabs 2 and 3) */}
+        {/* Right portions of actions (Tabs 2, 3, 4) */}
         <div className="flex items-center justify-around flex-1">
           <button
-            id="footer-ledger-tab"
+            id="footer-income-tab"
             onClick={() => {
               setActiveTab(2);
               localStorage.setItem('activeTab', '2');
             }}
-            style={activeTab === 2 ? { color: 'var(--color-accent)', backgroundColor: 'rgba(255,255,255,0.12)' } : {}}
+            style={activeTab === 2 ? { color: '#10b981', backgroundColor: 'rgba(16,185,129,0.15)' } : {}}
             className={`p-2.5 rounded-full cursor-pointer transition-all ${
-              activeTab === 2 
-                ? '' 
+              activeTab === 2
+                ? ''
+                : 'text-neutral-400 hover:text-white hover:bg-white/5'
+            }`}
+            title="收入明细"
+          >
+            <Icons.TrendingUp size={18} strokeWidth={2.5} />
+          </button>
+
+          <button
+            id="footer-ledger-tab"
+            onClick={() => {
+              setActiveTab(3);
+              localStorage.setItem('activeTab', '3');
+            }}
+            style={activeTab === 3 ? { color: 'var(--color-accent)', backgroundColor: 'rgba(255,255,255,0.12)' } : {}}
+            className={`p-2.5 rounded-full cursor-pointer transition-all ${
+              activeTab === 3
+                ? ''
                 : 'text-neutral-400 hover:text-white hover:bg-white/5'
             }`}
             title="消费明细"
@@ -2003,13 +2393,13 @@ export default function App() {
           <button
             id="footer-settings-tab"
             onClick={() => {
-              setActiveTab(3);
-              localStorage.setItem('activeTab', '3');
+              setActiveTab(4);
+              localStorage.setItem('activeTab', '4');
             }}
-            style={activeTab === 3 ? { color: 'var(--color-accent)', backgroundColor: 'rgba(255,255,255,0.12)' } : {}}
+            style={activeTab === 4 ? { color: 'var(--color-accent)', backgroundColor: 'rgba(255,255,255,0.12)' } : {}}
             className={`p-2.5 rounded-full cursor-pointer transition-all ${
-              activeTab === 3 
-                ? '' 
+              activeTab === 4
+                ? ''
                 : 'text-neutral-400 hover:text-white hover:bg-white/5'
             }`}
             title="系统设置"
@@ -2140,7 +2530,7 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* NEW EXPENDITURE MODAL FORM */}
+      {/* NEW EXPENDITURE / INCOME MODAL FORM */}
       <AnimatePresence>
         {isModalOpen && (
           <ExpenseModal
@@ -2148,6 +2538,7 @@ export default function App() {
             onClose={() => {
               setIsModalOpen(false);
               setEditingExpense(null);
+              setEditingIncome(null);
             }}
             onAddExpense={handleAddExpense}
             categories={categories}
@@ -2156,6 +2547,13 @@ export default function App() {
             currency={currency}
             editingExpense={editingExpense}
             onEditExpense={handleEditExpense}
+            onAddIncome={handleAddIncome}
+            incomeCategories={incomeCategories}
+            onAddIncomeCategory={handleAddIncomeCategory}
+            onDeleteIncomeCategory={handleDeleteIncomeCategory}
+            editingIncome={editingIncome}
+            onEditIncome={handleEditIncome}
+            defaultMode={editingIncome ? 'income' : 'expense'}
           />
         )}
       </AnimatePresence>
@@ -2173,6 +2571,24 @@ export default function App() {
             categories={categories}
             onAddCategory={handleAddCategory}
             onDeleteCategory={handleDeleteCategory}
+            currency={currency}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* FIXED INCOME RULES MANAGEMENT MODAL */}
+      <AnimatePresence>
+        {isFixedIncomeManagerOpen && (
+          <FixedIncomeModal
+            isOpen={isFixedIncomeManagerOpen}
+            onClose={() => setIsFixedIncomeManagerOpen(false)}
+            fixedIncomes={fixedIncomes}
+            onAddRule={handleAddFixedIncomeRule}
+            onEditRule={handleEditFixedIncomeRule}
+            onDeleteRule={handleDeleteFixedIncomeRule}
+            categories={incomeCategories}
+            onAddCategory={handleAddIncomeCategory}
+            onDeleteCategory={handleDeleteIncomeCategory}
             currency={currency}
           />
         )}

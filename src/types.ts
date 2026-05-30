@@ -19,35 +19,35 @@ export interface CategoryInfo {
 export const DEFAULT_CATEGORIES: Record<string, CategoryInfo> = {
   '吃饭': {
     name: '吃饭',
-    color: '#FDE68A', // Sleek Pastel Yellow
+    color: '#FDE68A',
     bgColor: 'bg-[#FDE68A]/30',
     circleColor: '#FDE68A',
     iconName: 'Utensils',
   },
   '逛街': {
     name: '逛街',
-    color: '#FBCFE8', // Sleek Pastel Pink
+    color: '#FBCFE8',
     bgColor: 'bg-[#FBCFE8]/30',
     circleColor: '#FBCFE8',
     iconName: 'ShoppingBag',
   },
   '网购': {
     name: '网购',
-    color: '#BFDBFE', // Sleek Pastel Blue
+    color: '#BFDBFE',
     bgColor: 'bg-[#BFDBFE]/30',
     circleColor: '#BFDBFE',
     iconName: 'Laptop',
   },
   '日常用品': {
     name: '日常用品',
-    color: '#A7F3D0', // Sleek Pastel Green
+    color: '#A7F3D0',
     bgColor: 'bg-[#A7F3D0]/30',
     circleColor: '#A7F3D0',
     iconName: 'Heart',
   },
   '交通': {
     name: '交通',
-    color: '#FED7AA', // Sleek Warm Peach
+    color: '#FED7AA',
     bgColor: 'bg-[#FED7AA]/30',
     circleColor: '#FED7AA',
     iconName: 'Car',
@@ -56,10 +56,68 @@ export const DEFAULT_CATEGORIES: Record<string, CategoryInfo> = {
 
 export interface FixedExpense {
   id: string;
-  name: string;           // 规则名称 (如 "每月房租", "iCloud会员")
-  amount: number;         // 固定开销金额
-  category: CategoryType; // 消费类别 (如 "日常用品", "网购")
-  dayOfMonth: number;     // 每月几号生效 (1 至 31)
-  autoInclude: boolean;   // 是否自动计入当月账单
-  note?: string;          // 备注 (可选)
+  name: string;
+  amount: number;
+  category: CategoryType;
+  dayOfMonth: number;
+  autoInclude: boolean;
+  note?: string;
 }
+
+// ─── Income Types ───────────────────────────────────────────────────────────
+
+export interface Income {
+  id: string;
+  amount: number;
+  category: string;
+  date: string;  // YYYY-MM-DD
+  note?: string;
+}
+
+export interface FixedIncome {
+  id: string;
+  name: string;        // e.g. "每月工资", "房租收入"
+  amount: number;
+  category: string;
+  dayOfMonth: number;  // 每月几号到账 (1–31)
+  autoInclude: boolean;
+  note?: string;
+}
+
+export const DEFAULT_INCOME_CATEGORIES: Record<string, CategoryInfo> = {
+  '工资薪酬': {
+    name: '工资薪酬',
+    color: '#6EE7B7',
+    bgColor: 'bg-[#6EE7B7]/30',
+    circleColor: '#6EE7B7',
+    iconName: 'Banknote',
+  },
+  '兼职副业': {
+    name: '兼职副业',
+    color: '#93C5FD',
+    bgColor: 'bg-[#93C5FD]/30',
+    circleColor: '#93C5FD',
+    iconName: 'Briefcase',
+  },
+  '理财投资': {
+    name: '理财投资',
+    color: '#FDE68A',
+    bgColor: 'bg-[#FDE68A]/30',
+    circleColor: '#FDE68A',
+    iconName: 'TrendingUp',
+  },
+  '红包礼金': {
+    name: '红包礼金',
+    color: '#FDA4AF',
+    bgColor: 'bg-[#FDA4AF]/30',
+    circleColor: '#FDA4AF',
+    iconName: 'Gift',
+  },
+  '其他收入': {
+    name: '其他收入',
+    color: '#C4B5FD',
+    bgColor: 'bg-[#C4B5FD]/30',
+    circleColor: '#C4B5FD',
+    iconName: 'CirclePlus',
+  },
+};
