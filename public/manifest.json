@@ -1,7 +1,7 @@
 {
   "name": "咕噜存钱",
   "short_name": "咕噜存钱",
-  "start_url": "/money/index.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#FAF9F7",
   "theme_color": "#FAF9F7",

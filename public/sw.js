@@ -55,6 +55,7 @@ self.addEventListener('fetch', event => {
   const isStaticAsset = 
     url.pathname.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|otf|json)$/) ||
     url.pathname === '/' ||
+    url.pathname === '/money' ||
     url.pathname.endsWith('/money/');
 
   if (isStaticAsset) {
