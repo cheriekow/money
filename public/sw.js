@@ -1,10 +1,10 @@
 const CACHE_NAME = 'gulu-money-v1';
 const STATIC_ASSETS = [
-  '/',
-  '/icon-180.png',
-  '/icon-192.png',
-  '/icon-512.png',
-  '/manifest.json'
+  './',
+  './icon-180.png',
+  './icon-192.png',
+  './icon-512.png',
+  './manifest.json'
 ];
 
 // Install event
@@ -54,7 +54,8 @@ self.addEventListener('fetch', event => {
   // 2. Static assets (JS, CSS, images, fonts, icons) -> Cache first
   const isStaticAsset = 
     url.pathname.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|otf|json)$/) ||
-    STATIC_ASSETS.includes(url.pathname);
+    url.pathname === '/' ||
+    url.pathname.endsWith('/money/');
 
   if (isStaticAsset) {
     event.respondWith(

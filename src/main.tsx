@@ -21,7 +21,7 @@ if ('serviceWorker' in navigator) {
       location.hostname.includes("antigravity"); // Antigravity preview check
 
     if (!isDevelopment) {
-      navigator.serviceWorker.register('/sw.js')
+      navigator.serviceWorker.register(import.meta.env.BASE_URL + 'sw.js')
         .then(registration => {
           console.log('SW registered successfully:', registration.scope);
         })
