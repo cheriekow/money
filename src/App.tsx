@@ -140,6 +140,12 @@ export default function App() {
     return saved ? parseInt(saved, 10) : 0;
   });
 
+  const [lastActiveTab, setLastActiveTab] = useState<number>(() => {
+    const saved = localStorage.getItem('activeTab');
+    const parsed = saved ? parseInt(saved, 10) : 0;
+    return parsed === 4 ? 0 : parsed;
+  });
+
   // --- DYNAMICALLY SELECTABLE YEAR-MONTH STATE ---
   const [selectedYearMonth, setSelectedYearMonth] = useState<string>(() => {
     const today = new Date();
@@ -743,8 +749,15 @@ export default function App() {
             <button
               id="currency-setting-btn"
               onClick={() => {
-                setActiveTab(4);
-                localStorage.setItem('activeTab', '4');
+                if (activeTab === 4) {
+                  const target = lastActiveTab === 4 ? 0 : lastActiveTab;
+                  setActiveTab(target);
+                  localStorage.setItem('activeTab', String(target));
+                } else {
+                  setLastActiveTab(activeTab);
+                  setActiveTab(4);
+                  localStorage.setItem('activeTab', '4');
+                }
               }}
               title="系统偏好设置"
               className={`w-9 h-9 border rounded-full flex items-center justify-center transition-all cursor-pointer relative hover:scale-[1.05] active:scale-[0.95] ${
@@ -990,57 +1003,7 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* 首页固定收入 + 月度收入 摘要卡片 */}
-                <div className="flex flex-col gap-2">
-                  {/* Fixed Income banner */}
-                  <div
-                    onClick={() => setIsFixedIncomeManagerOpen(true)}
-                    className="bg-emerald-50/80 border border-emerald-200/60 backdrop-blur-sm px-4 py-3.5 rounded-[24px] shadow-xs hover:border-emerald-400/60 hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer flex items-center justify-between animate-fade-in"
-                    id="dashboard-fixed-incomes-banner"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
-                        <Icons.TrendingUp size={16} />
-                      </div>
-                      <div className="text-left">
-                        <span className="text-xs font-black text-emerald-900 block">每月固定收入</span>
-                        <span className="text-[10px] text-emerald-700/70 font-medium">
-                          共 {fixedIncomes.length} 项规则 · {fixedIncomes.filter(fi => fi.autoInclude).length} 项自动计入
-                        </span>
-                      </div>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <span className="text-sm font-extrabold text-emerald-700 block font-mono">
-                        +{currency}{fixedIncomes.filter(fi => fi.autoInclude).reduce((s, fi) => s + fi.amount, 0).toFixed(2)}
-                      </span>
-                      <span className="text-[8px] text-emerald-600/70 font-semibold block flex items-center gap-0.5 justify-end">
-                        管理规则 <Icons.ChevronRight size={8} />
-                      </span>
-                    </div>
-                  </div>
 
-                  {/* Month income vs expense quick comparison */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="bg-emerald-50/70 border border-emerald-200/50 rounded-[20px] p-3 flex flex-col gap-1">
-                      <span className="text-[9px] font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-1">
-                        <Icons.ArrowDownCircle size={10} /> 本月收入
-                      </span>
-                      <span className="text-base font-extrabold text-emerald-700 font-mono">{currency}{displayTotalIncome.toFixed(0)}</span>
-                      <span className="text-[9px] text-emerald-600/60">{currentMonthIncomes.length + virtualFixedIncomesForThisMonth.length} 笔</span>
-                    </div>
-                    <div className={`rounded-[20px] p-3 flex flex-col gap-1 border ${(displayTotalIncome - displayTotal) >= 0 ? 'bg-emerald-50/70 border-emerald-200/50' : 'bg-red-50/70 border-red-200/50'}`}>
-                      <span className={`text-[9px] font-bold uppercase tracking-wider flex items-center gap-1 ${(displayTotalIncome - displayTotal) >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>
-                        <Icons.Scale size={10} /> 收支净余
-                      </span>
-                      <span className={`text-base font-extrabold font-mono ${(displayTotalIncome - displayTotal) >= 0 ? 'text-emerald-700' : 'text-red-600'}`}>
-                        {(displayTotalIncome - displayTotal) >= 0 ? '+' : ''}{currency}{(displayTotalIncome - displayTotal).toFixed(0)}
-                      </span>
-                      <span className={`text-[9px] ${(displayTotalIncome - displayTotal) >= 0 ? 'text-emerald-600/60' : 'text-red-500/60'}`}>
-                        {(displayTotalIncome - displayTotal) >= 0 ? '收支盈余' : '入不敷出'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
 
                 {/* Past Monthly History summation selector card */}
                 <div className="bg-white/80 border border-white/50 backdrop-blur-sm p-5 rounded-[28px] shadow-xs flex flex-col gap-3 select-none animate-fade-in" id="monthly-history-summary-card">
@@ -2308,6 +2271,7 @@ export default function App() {
             onClick={() => {
               setActiveTab(0);
               localStorage.setItem('activeTab', '0');
+              setLastActiveTab(0);
             }}
             style={activeTab === 0 ? { color: 'var(--color-accent)', backgroundColor: 'rgba(255,255,255,0.12)' } : {}}
             className={`p-2.5 rounded-full cursor-pointer transition-all ${
@@ -2326,6 +2290,7 @@ export default function App() {
               setActiveTab(1);
               localStorage.setItem('activeTab', '1');
               setFilterMonthOnly(true);
+              setLastActiveTab(1);
             }}
             style={activeTab === 1 ? { color: 'var(--color-accent)', backgroundColor: 'rgba(255,255,255,0.12)' } : {}}
             className={`p-2.5 rounded-full cursor-pointer transition-all ${
@@ -2359,6 +2324,7 @@ export default function App() {
             onClick={() => {
               setActiveTab(2);
               localStorage.setItem('activeTab', '2');
+              setLastActiveTab(2);
             }}
             style={activeTab === 2 ? { color: '#10b981', backgroundColor: 'rgba(16,185,129,0.15)' } : {}}
             className={`p-2.5 rounded-full cursor-pointer transition-all ${
@@ -2376,6 +2342,7 @@ export default function App() {
             onClick={() => {
               setActiveTab(3);
               localStorage.setItem('activeTab', '3');
+              setLastActiveTab(3);
             }}
             style={activeTab === 3 ? { color: 'var(--color-accent)', backgroundColor: 'rgba(255,255,255,0.12)' } : {}}
             className={`p-2.5 rounded-full cursor-pointer transition-all ${
