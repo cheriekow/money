@@ -65,7 +65,7 @@ Parsing rules:
 11. Detect Touch 'n Go / TNG / e-wallet as payment_method: "TnG".
 12. Detect cash / tunai / 现金 as payment_method: "现金".
 13. Detect card / bank transfer / DuitNow / online banking as payment_method: "银行卡".
-14. If no payment method is mentioned, return payment_method as "".
+14. If no payment method is mentioned, return payment_method as "未指定".
 15. Use only existing app categories:
    - 吃饭
    - 逛街
@@ -121,7 +121,7 @@ Parsing rules:
                     amount: { type: 'NUMBER' },
                     currency: { type: 'STRING' },
                     category: { type: 'STRING', enum: ['吃饭', '逛街', '网购', '日常用品', '交通', '收入', '自定义'] },
-                    payment_method: { type: 'STRING', enum: ['现金', 'TnG', '银行卡', '自定义', ''] },
+                    payment_method: { type: 'STRING', enum: ['现金', 'TnG', '银行卡', '自定义', '未指定'] },
                     transaction_date: { type: 'STRING' },
                     note: { type: 'STRING' },
                     confidence: { type: 'NUMBER' }

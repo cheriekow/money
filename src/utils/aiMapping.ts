@@ -24,7 +24,7 @@ export const mapPaymentMethod = (
   rawPayment: string,
   paymentMethods: PaymentMethodInfo[]
 ): string => {
-  if (!rawPayment) return ''; // Let frontend use default
+  if (!rawPayment || rawPayment === '未指定') return ''; // Let frontend use default
 
   const normalized = rawPayment.toLowerCase().trim();
 
