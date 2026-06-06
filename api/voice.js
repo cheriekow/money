@@ -46,7 +46,8 @@ export default async (req, res) => {
         return res.status(400).json({ error: '请求体中缺少 text 数据' });
       }
     } else if (contentType.includes('multipart/form-data')) {
-      const form = formidable({ multiples: false });
+      const os = require('os');
+      const form = formidable({ multiples: false, uploadDir: os.tmpdir() });
       const [fields, files] = await new Promise((resolve, reject) => {
         form.parse(req, (err, fields, files) => {
           if (err) reject(err);
@@ -54,14 +55,15 @@ export default async (req, res) => {
         });
       });
 
-      const audioFile = files.audio?.[0] || files.audio;
+      const audioFile = Array.isArray(files.audio) ? files.audio[0] : files.audio;
       if (!audioFile) {
         return res.status(400).json({ error: '未能找到上传的音频文件' });
       }
 
       const fileData = fs.readFileSync(audioFile.filepath);
       audioBase64 = fileData.toString('base64');
-      mimeType = audioFile.mimetype || 'audio/webm';
+      // Strip codecs for Gemini (e.g. "audio/mp4; codecs=mp4a.40.2" -> "audio/mp4")
+      mimeType = (audioFile.mimetype || 'audio/webm').split(';')[0].trim();
     } else {
       return res.status(400).json({ error: '不支持的 Content-Type' });
     }

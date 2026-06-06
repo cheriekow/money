@@ -181,7 +181,7 @@ export const VoiceAI: React.FC<VoiceAIProps> = ({
     } catch (err: any) {
       console.error('Gemini Voice AI failed:', err);
       // Fallback to SpeechRecognition
-      triggerFeedback('音频解析失败，尝试使用本地语音识别回退...', 'info');
+      triggerFeedback(`音频异常 (${err.message})，回退至本地识别...`, 'info');
       await fallbackToSpeechRecognition();
       success = true; // Assuming fallback handles its own errors or UI state
     }
