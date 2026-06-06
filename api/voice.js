@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import formidable from 'formidable';
 import fs from 'fs';
+import os from 'os';
 
 dotenv.config();
 
@@ -46,7 +47,6 @@ export default async (req, res) => {
         return res.status(400).json({ error: '请求体中缺少 text 数据' });
       }
     } else if (contentType.includes('multipart/form-data')) {
-      const os = require('os');
       const form = formidable({ multiples: false, uploadDir: os.tmpdir() });
       const [fields, files] = await new Promise((resolve, reject) => {
         form.parse(req, (err, fields, files) => {
