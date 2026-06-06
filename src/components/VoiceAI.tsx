@@ -81,10 +81,11 @@ export const VoiceAI: React.FC<VoiceAIProps> = ({
 
   const startRecording = async () => {
     try {
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       audioChunksRef.current = [];
       
-      const mediaRecorder = new MediaRecorder(stream);
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported(mimeType) ? mimeType : '' });
       mediaRecorderRef.current = mediaRecorder;
 
       mediaRecorder.ondataavailable = (event) => {
@@ -94,7 +95,7 @@ export const VoiceAI: React.FC<VoiceAIProps> = ({
       };
 
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
         stream.getTracks().forEach(track => track.stop());
         await processAudio(audioBlob);
       };
@@ -143,7 +144,8 @@ export const VoiceAI: React.FC<VoiceAIProps> = ({
       const token = userObj?.token || 'mock-jwt-token-pro-456';
 
       const formData = new FormData();
-      formData.append('audio', audioBlob, 'recording.webm');
+      const ext = audioBlob.type.includes('mp4') ? 'mp4' : 'webm';
+      formData.append('audio', audioBlob, `recording.${ext}`);
 
       const response = await fetch('/api/voice', {
         method: 'POST',

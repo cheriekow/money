@@ -39,14 +39,7 @@ export default async (req, res) => {
 
     // --- 2. 解析输入 (JSON text or Multipart Audio) ---
     if (contentType.includes('application/json')) {
-      // Vercel disables bodyParser, so we must parse raw JSON manually if config.api.bodyParser = false is set
-      // However, if we parse it manually:
-      const buffers = [];
-      for await (const chunk of req) {
-        buffers.push(chunk);
-      }
-      const data = Buffer.concat(buffers).toString();
-      const body = JSON.parse(data || '{}');
+      const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
       textInput = body.text;
 
       if (!textInput) {
