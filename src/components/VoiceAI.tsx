@@ -29,7 +29,14 @@ export const VoiceAI: React.FC<VoiceAIProps> = ({
   renderMicButton,
 }) => {
   const [isRecording, setIsRecording] = useState(false);
+  const [userManuallyStopped, setUserManuallyStopped] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [reachedTimeout, setReachedTimeout] = useState(false);
+
+  const isRecordingRef = useRef(false);
+  const userManuallyStoppedRef = useRef(false);
+  const accumulatedTranscriptRef = useRef('');
+  const timeoutTimerRef = useRef<NodeJS.Timeout | null>(null);
   const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
@@ -39,29 +46,65 @@ export const VoiceAI: React.FC<VoiceAIProps> = ({
       const recognition = new SpeechRecognition();
       recognition.lang = 'zh-CN';
       recognition.interimResults = false;
+      recognition.continuous = true;
       recognition.maxAlternatives = 1;
 
       recognition.onstart = () => {
         setIsRecording(true);
+        isRecordingRef.current = true;
       };
 
-      recognition.onresult = async (event: any) => {
-        const text = event.results[0][0].transcript;
-        setIsRecording(false);
-        await processText(text);
+      recognition.onresult = (event: any) => {
+        let text = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            text += event.results[i][0].transcript;
+          }
+        }
+        if (text) {
+          accumulatedTranscriptRef.current += text;
+        }
       };
 
-      recognition.onerror = () => {
+      recognition.onerror = (event: any) => {
+        console.warn('Speech recognition error:', event.error);
+        if (event.error === 'no-speech' || event.error === 'aborted') {
+          // Ignore transient errors or pauses, keep recording session active
+          return;
+        }
+        // For fatal errors, fallback
         setIsRecording(false);
+        isRecordingRef.current = false;
         handleManualInput();
       };
 
       recognition.onend = () => {
-        setIsRecording(false);
+        // If still recording and user did not stop it, restart it automatically
+        if (isRecordingRef.current && !userManuallyStoppedRef.current) {
+          try {
+            recognition.start();
+          } catch (e) {
+            console.warn('Failed to restart speech recognition:', e);
+          }
+        } else if (userManuallyStoppedRef.current) {
+          // Stopped manually, run parser
+          const text = accumulatedTranscriptRef.current.trim();
+          if (text) {
+            processText(text);
+          } else {
+            handleManualInput();
+          }
+        }
       };
 
       recognitionRef.current = recognition;
     }
+
+    return () => {
+      if (timeoutTimerRef.current) {
+        clearTimeout(timeoutTimerRef.current);
+      }
+    };
   }, []);
 
   const handleManualInput = () => {
@@ -69,6 +112,8 @@ export const VoiceAI: React.FC<VoiceAIProps> = ({
     setTimeout(() => {
       const text = window.prompt('请输入记账内容 (如: 买了咖啡15块):');
       if (text && text.trim() !== '') {
+        setUserManuallyStopped(true);
+        userManuallyStoppedRef.current = true;
         processText(text.trim());
       } else {
         setIsProcessing(false);
@@ -77,6 +122,11 @@ export const VoiceAI: React.FC<VoiceAIProps> = ({
   };
 
   const processText = async (text: string) => {
+    // Guard: parseVoiceInput() must only run if userManuallyStopped === true
+    if (!userManuallyStoppedRef.current) {
+      return;
+    }
+
     setIsProcessing(true);
 
     try {
@@ -122,6 +172,52 @@ export const VoiceAI: React.FC<VoiceAIProps> = ({
     }
   };
 
+  const startRecording = () => {
+    setIsRecording(true);
+    isRecordingRef.current = true;
+    setUserManuallyStopped(false);
+    userManuallyStoppedRef.current = false;
+    setReachedTimeout(false);
+    accumulatedTranscriptRef.current = '';
+
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.start();
+      } catch (e) {
+        console.warn('Error starting recognition, falling back:', e);
+        handleManualInput();
+        return;
+      }
+    } else {
+      handleManualInput();
+      return;
+    }
+
+    // Start 30 seconds timer
+    if (timeoutTimerRef.current) clearTimeout(timeoutTimerRef.current);
+    timeoutTimerRef.current = setTimeout(() => {
+      setReachedTimeout(true);
+      triggerFeedback('已达到最长录音时间，正在整理记账信息...', 'info');
+      stopRecording();
+    }, 30000);
+  };
+
+  const stopRecording = () => {
+    if (timeoutTimerRef.current) {
+      clearTimeout(timeoutTimerRef.current);
+      timeoutTimerRef.current = null;
+    }
+
+    setUserManuallyStopped(true);
+    userManuallyStoppedRef.current = true;
+    setIsRecording(false);
+    isRecordingRef.current = false;
+
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
+  };
+
   const handleMicClick = () => {
     if (!isLoggedIn) {
       triggerFeedback('请先登录以使用 AI 语音记账功能！', 'info');
@@ -136,20 +232,9 @@ export const VoiceAI: React.FC<VoiceAIProps> = ({
     }
 
     if (isRecording) {
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-      }
-      setIsRecording(false);
+      stopRecording();
     } else {
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.start();
-        } catch (e) {
-          handleManualInput();
-        }
-      } else {
-        handleManualInput();
-      }
+      startRecording();
     }
   };
 
@@ -163,15 +248,14 @@ export const VoiceAI: React.FC<VoiceAIProps> = ({
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-40"
             onClick={() => {
-              if (isRecording && recognitionRef.current) {
-                recognitionRef.current.stop();
-                setIsRecording(false);
+              if (isRecording) {
+                stopRecording();
               }
             }}
           />
         )}
       </AnimatePresence>
-
+ 
       <div className="relative z-50">
         <div className="flex justify-center mt-2.5 mb-1.5 relative">
           <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-[90vw] max-w-[320px] pointer-events-none">
@@ -189,13 +273,13 @@ export const VoiceAI: React.FC<VoiceAIProps> = ({
                       <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
                     </span>
                     <div className="text-left">
-                      <p className="text-xs font-black text-white">正在倾听您的记账口令...</p>
+                      <p className="text-xs font-black text-white">正在聆听... 再按一次完成录音</p>
                       <p className="text-[9px] text-neutral-400 font-medium">请说如：“买牛奶花了35元”</p>
                     </div>
                   </div>
                 </motion.div>
               )}
-
+ 
               {isProcessing && (
                 <motion.div
                   initial={{ opacity: 0, y: 30, scale: 0.95 }}
@@ -205,7 +289,9 @@ export const VoiceAI: React.FC<VoiceAIProps> = ({
                 >
                   <Icons.Loader2 size={16} className="animate-spin text-amber-400 shrink-0" />
                   <div className="text-left">
-                    <p className="text-xs font-black text-white">正在整理记账信息...</p>
+                    <p className="text-xs font-black text-white">
+                      {reachedTimeout ? '已达到最长录音时间，正在整理记账信息...' : '正在整理记账信息...'}
+                    </p>
                     <p className="text-[9px] text-neutral-400 font-medium">智能分析中，请稍候</p>
                   </div>
                 </motion.div>
