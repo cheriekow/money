@@ -68,7 +68,7 @@ export const PricingPage: React.FC<PricingPageProps> = ({ user, onBackToApp }) =
             <span className="text-neutral-400 text-[10px] font-black uppercase tracking-widest">终身买断特惠价</span>
             <div className="flex items-baseline gap-1 font-sans">
               <span className="text-lg font-black text-neutral-900 leading-none">RM</span>
-              <span className="text-4xl font-black text-neutral-900 leading-none tracking-tight">29.00</span>
+              <span className="text-4xl font-black text-neutral-900 leading-none tracking-tight">19.00</span>
             </div>
             <span className="text-[9px] text-neutral-400 font-semibold leading-none line-through">原价 RM 59.00</span>
           </div>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import * as Icons from 'lucide-react';
 import { motion } from 'motion/react';
+import { PRO_BASE_PRICE_MYR, formatMembershipPrice } from '../utils/priceConversion';
 
 interface PricingModalProps {
   isOpen: boolean;
@@ -142,7 +143,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                     </li>
                     <li className="flex items-center gap-1.5">
                       <Icons.Check size={11} className="text-amber-600 shrink-0" /> 
-                      <span>🧠 GPT 智能备注识别与自动匹配分类</span>
+                      <span>🧠 Gemini 智能备注识别与自动匹配分类</span>
                     </li>
                     <li className="flex items-center gap-1.5">
                       <Icons.Check size={11} className="text-amber-600 shrink-0" /> 
@@ -156,9 +157,13 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                 </div>
 
                 <div className="text-right shrink-0 pr-1 mt-4">
-                  <div className="text-lg font-black text-amber-800 font-sans tracking-tight leading-none">{currency}29</div>
+                  <div className="text-lg font-black text-amber-800 font-sans tracking-tight leading-none">
+                    {formatMembershipPrice(PRO_BASE_PRICE_MYR, currency)}
+                  </div>
                   <span className="text-[9px] font-black text-amber-700/80 block mt-1 leading-none">/ 单月</span>
-                  <span className="text-[8px] font-medium text-neutral-400 block mt-0.5 leading-none line-through">{currency}39</span>
+                  <span className="text-[8px] font-medium text-neutral-400 block mt-0.5 leading-none line-through">
+                    {formatMembershipPrice(29, currency)}
+                  </span>
                 </div>
               </div>
 

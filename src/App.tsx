@@ -3405,9 +3405,13 @@ export default function App() {
         isOpen={isAdvisorOpen}
         onClose={() => setIsAdvisorOpen(false)}
         expenses={expenses}
+        incomes={incomes}
+        selectedYearMonth={selectedYearMonth}
         monthlyBudget={monthlyBudget}
         currency={currency}
         username={user?.username || ''}
+        isProMember={user?.isProMember || false}
+        token={user?.token || ''}
         triggerFeedback={triggerFeedback}
       />
 
