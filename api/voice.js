@@ -1,16 +1,5 @@
 import dotenv from 'dotenv';
-import formidable from 'formidable';
-import fs from 'fs';
-import os from 'os';
-
 dotenv.config();
-
-// Required for Vercel to allow formidable to parse the multipart stream
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
 
 export default async (req, res) => {
   if (req.method !== 'POST') {
@@ -36,36 +25,17 @@ export default async (req, res) => {
     let mimeType = 'audio/webm';
     let textInput = null;
 
-    const contentType = req.headers['content-type'] || '';
+    // Vercel automatically parses JSON bodies into req.body
+    const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
 
-    // --- 2. 解析输入 (JSON text or Multipart Audio) ---
-    if (contentType.includes('application/json')) {
-      const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+    if (body.audio) {
+      audioBase64 = body.audio;
+      // Extract clean mimeType, stripping codecs
+      mimeType = (body.mimeType || 'audio/webm').split(';')[0].trim();
+    } else if (body.text) {
       textInput = body.text;
-
-      if (!textInput) {
-        return res.status(400).json({ error: '请求体中缺少 text 数据' });
-      }
-    } else if (contentType.includes('multipart/form-data')) {
-      const form = formidable({ multiples: false, uploadDir: os.tmpdir() });
-      const [fields, files] = await new Promise((resolve, reject) => {
-        form.parse(req, (err, fields, files) => {
-          if (err) reject(err);
-          else resolve([fields, files]);
-        });
-      });
-
-      const audioFile = Array.isArray(files.audio) ? files.audio[0] : files.audio;
-      if (!audioFile) {
-        return res.status(400).json({ error: '未能找到上传的音频文件' });
-      }
-
-      const fileData = fs.readFileSync(audioFile.filepath);
-      audioBase64 = fileData.toString('base64');
-      // Strip codecs for Gemini (e.g. "audio/mp4; codecs=mp4a.40.2" -> "audio/mp4")
-      mimeType = (audioFile.mimetype || 'audio/webm').split(';')[0].trim();
     } else {
-      return res.status(400).json({ error: '不支持的 Content-Type' });
+      return res.status(400).json({ error: '请求体中缺少 audio 或 text 数据' });
     }
 
     const modelName = process.env.GEMINI_VOICE_MODEL || process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite';

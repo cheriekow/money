@@ -139,21 +139,25 @@ export const VoiceAI: React.FC<VoiceAIProps> = ({
     let success = false;
 
     try {
+      // 1. Safe base64 conversion (bulletproof for serverless)
+      const base64Data = await blobToBase64(audioBlob);
+      const mimeType = audioBlob.type || 'audio/mp4';
+
       const userString = localStorage.getItem('user');
       const userObj = userString ? JSON.parse(userString) : null;
       const token = userObj?.token || 'mock-jwt-token-pro-456';
 
-      const formData = new FormData();
-      const ext = audioBlob.type.includes('mp4') ? 'mp4' : 'webm';
-      formData.append('audio', audioBlob, `recording.${ext}`);
-
       const response = await fetch('/api/voice', {
         method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
           'x-user-pro-status': isProMember ? 'true' : 'false',
         },
-        body: formData,
+        body: JSON.stringify({
+          audio: base64Data,
+          mimeType: mimeType
+        }),
       });
 
       if (!response.ok) {
