@@ -41,34 +41,42 @@ export default async (req, res) => {
       return res.status(400).json({ error: '请求体中缺少 Base64 编码的音频数据 (audio)' });
     }
 
+    const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite';
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       console.error('环境变量 GEMINI_API_KEY 未配置');
       return res.status(500).json({ error: '后端未配置 GEMINI_API_KEY，请检查 Vercel 环境变量配置' });
     }
 
-    const promptText = `你是一个智能记账助手的语音解析模块。请听取用户的语音内容（可能包含多笔账目），精确提取出以下记账要素并严格按照 JSON 格式返回。
-如果语音中提到“总共”等汇总金额，请与计算所得的总金额进行对比。
+    const promptText = `You are a multilingual Malaysian expense/income transaction parser.
+The user may speak Chinese, English, Malay, or a mixture of these languages.
+Your job is to understand the meaning, not just match keywords.
 
-要求返回的 JSON 必须符合以下结构：
-{
-  "items": [
-    {
-      "type": "expense" 或者 "income",
-      "amount": 数值型,
-      "category": "提取的分类或动作名称",
-      "payment_method": "提取的支付方式，如 TnG, 现金, 银行卡等，若无则留空",
-      "transaction_date": "提取的日期，如今天、昨天，或对应的相对日期描述",
-      "note": "提取的简短备注，请去除任何类似“AI语音:”的前缀"
-    }
-  ],
-  "detected_total": 语音中提到的总金额（数值型，如果有），否则为 null,
-  "calculated_total": 所有 items 中 amount 的计算总和（数值型）,
-  "total_matches": detected_total 和 calculated_total 是否一致（如果 detected_total 为 null，则为 true）,
-  "transcript": "语音的完整转文字内容"
-}`;
+Return strict JSON only.
+Do not explain.
+Do not include markdown.
 
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`;
+Rules for AI:
+1. If the user mentions spending, buying, eating, drinking, paying, ordering, subscribing, or purchasing, classify as "expense".
+2. If the user mentions receiving money, salary, client payment, income, commission, or freelance payment, classify as "income".
+3. If unclear, default to "expense".
+4. Extract only the numeric value into amount. (Example: "RM20" -> 20, "20块" -> 20, "20 ringgit" -> 20)
+5. Put the actual item/service description into note. (Example: "roti planta 20块，用 Touch 'n Go 支付" -> note: "Roti Planta")
+6. Do not put amount words or payment method words into note.
+7. If the user says one amount and multiple items, create one transaction and combine the items into note. (Example: "10块钱，吃了汉堡包还有喝了 Ice Lemon Tea" -> amount: 10, note: "汉堡包、Ice Lemon Tea")
+8. Only split into multiple transactions when there are clearly multiple separate amounts. (Example: "Nasi Lemak 10块，Ice Lemon Tea 5块" -> Output two items)
+9. Detect Touch 'n Go / TNG / e-wallet as payment_method: "TnG".
+10. Detect cash / tunai / 现金 as payment_method: "现金".
+11. Detect card / bank transfer / DuitNow / online banking as payment_method: "银行卡".
+12. If no payment method is mentioned, return payment_method as an empty string "".
+13. Use the existing app categories only: 吃饭, 逛街, 网购, 日常用品, 交通, 收入, 自定义.
+14. For food, drinks, meals, restaurants, Malaysian food, coffee, tea, and ordering food, use category: "吃饭".
+15. For transport, petrol, Grab, toll, parking, train, bus, taxi, use category: "交通".
+16. For online shopping, Shopee, Lazada, Taobao, use category: "网购".
+17. For salary, client payment, freelance income, and money received, use category: "收入".
+18. If category is uncertain, use "自定义".`;
+
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
     const geminiResponse = await fetch(geminiUrl, {
       method: 'POST',
@@ -103,20 +111,22 @@ export default async (req, res) => {
                   properties: {
                     type: { type: 'STRING', enum: ['expense', 'income'] },
                     amount: { type: 'NUMBER' },
+                    currency: { type: 'STRING' },
                     category: { type: 'STRING' },
                     payment_method: { type: 'STRING' },
                     transaction_date: { type: 'STRING' },
                     note: { type: 'STRING' },
+                    confidence: { type: 'NUMBER' }
                   },
-                  required: ['type', 'amount', 'category', 'payment_method', 'transaction_date', 'note'],
+                  required: ['type', 'amount', 'currency', 'category', 'payment_method', 'transaction_date', 'note', 'confidence'],
                 },
               },
               detected_total: { type: 'NUMBER', nullable: true },
               calculated_total: { type: 'NUMBER' },
               total_matches: { type: 'BOOLEAN' },
-              transcript: { type: 'STRING' },
+              warnings: { type: 'ARRAY', items: { type: 'STRING' } }
             },
-            required: ['items', 'calculated_total', 'total_matches', 'transcript'],
+            required: ['items', 'calculated_total'],
           },
         },
       }),

@@ -12,7 +12,7 @@ import { PricingModal } from './components/PricingModal';
 import { VoiceAI } from './components/VoiceAI';
 import { ProfileModal } from './components/ProfileModal';
 import { AdvisorModal } from './components/AdvisorModal';
-import { mapCategory, mapPaymentMethod, mapDate, detectTransactionType } from './utils/aiMapping';
+import { mapCategory, mapPaymentMethod, mapDate } from './utils/aiMapping';
 import { supabase } from './supabase';
 import { AdminLogin } from './components/Admin/AdminLogin';
 import { AdminDashboard } from './components/Admin/AdminDashboard';
@@ -743,8 +743,7 @@ export default function App() {
     }
 
     const item = result.items[0];
-    const fullText = (result.rawText || '') + ' ' + (item.note || '');
-    const detectedType = detectTransactionType(fullText);
+    const detectedType = item.type === 'income' ? 'income' : 'expense';
 
     const newTx = {
       type: detectedType,

@@ -195,23 +195,20 @@ export const VoiceAI: React.FC<VoiceAIProps> = ({
         {
           mode: 'local_fallback',
           sourceLabel: '本地智能解析',
-          rawText: '今天晚上吃寿司花了一百零八块五毛',
-          items: [{ type: 'expense', amount: 108.50, category: '吃饭', payment_method: '', transaction_date: dateStr, note: '寿司晚餐' }],
-          detected_total: 108.50,
-          calculated_total: 108.50,
+          rawText: '10块钱，吃了汉堡包还有喝了 Ice Lemon Tea，用 Touch n Go',
+          items: [{ type: 'expense', amount: 10, category: '吃饭', payment_method: 'TnG', transaction_date: dateStr, note: '汉堡包、Ice Lemon Tea' }],
+          detected_total: 10,
+          calculated_total: 10,
           total_matches: true,
           warnings: []
         },
         {
           mode: 'local_fallback',
           sourceLabel: '本地智能解析',
-          rawText: '今天收入 50，然后吃饭花了 10，用 TNG',
-          items: [
-            { type: 'income', amount: 50, category: '收入', payment_method: '', transaction_date: dateStr, note: '收入' },
-            { type: 'expense', amount: 10, category: '吃饭', payment_method: 'TnG', transaction_date: dateStr, note: '吃饭' }
-          ],
-          detected_total: null,
-          calculated_total: 60,
+          rawText: '买了一箱牛奶日常用品一共35',
+          items: [{ type: 'expense', amount: 35, category: '日常用品', payment_method: '', transaction_date: dateStr, note: '一箱牛奶' }],
+          detected_total: 35,
+          calculated_total: 35,
           total_matches: true,
           warnings: []
         },
