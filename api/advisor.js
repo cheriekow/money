@@ -25,19 +25,27 @@ export default async (req, res) => {
       return res.status(401).json({ error: 'UNAUTHORIZED' });
     }
 
+    // Initialize user-specific client to bypass RLS restrictions
+    const supabaseUserClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    });
+
     // 2. Query gulu_profiles
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: profileError } = await supabaseUserClient
       .from('gulu_profiles')
       .select('plan, role')
       .eq('id', user.id)
       .single();
 
-    // 3. Fallback check for gulu_members just in case (optional, but requested to strictly check gulu_profiles)
+    // 3. Fallback check for gulu_members just in case
     let isPro = profile?.plan === 'pro' || profile?.role === 'admin';
 
-    // To be perfectly safe, also check if they are pro via metadata or fallback member table
     if (!isPro) {
-      const { data: memberProfile } = await supabase
+      const { data: memberProfile } = await supabaseUserClient
         .from('gulu_members')
         .select('member_status, role')
         .eq('id', user.id)
