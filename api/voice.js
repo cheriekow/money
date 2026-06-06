@@ -154,34 +154,69 @@ function validateAndCleanNote(note, heardText) {
 }
 
 export default async (req, res) => {
+  console.log('[DEBUG Backend] request_received at /api/voice');
   if (req.method !== 'POST') {
+    console.log('[DEBUG Backend] error_stage: Method Not Allowed');
     return res.status(405).json({ error: '方法不支持，请使用 POST' });
   }
 
   // --- 1. 鉴权逻辑 ( simulated Auth & Pro Status check ) ---
   const authHeader = req.headers.authorization;
   const isProHeader = req.headers['x-user-pro-status'];
+  
+  console.log('[DEBUG Backend] has_auth_header:', !!authHeader);
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    console.log('[DEBUG Backend] error_stage: Missing or Invalid Auth Header');
     return res.status(401).json({ error: '身份校验未通过，缺少有效的 Authorization Bearer Token' });
   }
 
   const token = authHeader.split(' ')[1];
   
+  console.log('[DEBUG Backend] auth_verified: true (token present)');
+  console.log('[DEBUG Backend] user_plan:', isProHeader === 'true' ? 'Pro' : 'Free/Guest');
+
   if (isProHeader !== 'true' && token !== 'mock-jwt-token-pro-456') {
+    console.log('[DEBUG Backend] error_stage: Unauthorized Plan');
     return res.status(403).json({ error: '权限被拦截：此智能功能仅限 👑 Pro 尊贵会员使用' });
   }
 
   try {
     let textInput = null;
+    let audioBase64 = null;
+    let mimeType = null;
+    let mode = 'text';
 
     // Vercel automatically parses JSON bodies into req.body
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
 
-    if (body.text) {
-      textInput = body.text;
+    if (body.mode === 'audio') {
+      mode = 'audio';
+      audioBase64 = body.audioBase64;
+      mimeType = body.mimeType;
+
+      console.log('[DEBUG Backend] mode: audio');
+      console.log('[DEBUG Backend] has_audioBase64:', !!audioBase64);
+      console.log('[DEBUG Backend] audio_base64_length:', audioBase64 ? audioBase64.length : 0);
+      console.log('[DEBUG Backend] mimeType:', mimeType);
+
+      if (!audioBase64 || !mimeType) {
+        console.log('[DEBUG Backend] error_stage: Missing audioBase64 or mimeType');
+        return res.status(400).json({ error: '音频数据不完整' });
+      }
     } else {
-      return res.status(400).json({ error: '请求体中缺少 text 数据' });
+      mode = 'text';
+      console.log('[DEBUG Backend] mode: text');
+      console.log('[DEBUG Backend] has_audioBase64: false');
+      console.log('[DEBUG Backend] audio_base64_length: 0');
+      console.log('[DEBUG Backend] mimeType: null');
+
+      if (body.text) {
+        textInput = body.text;
+      } else {
+        console.log('[DEBUG Backend] error_stage: Missing textInput data');
+        return res.status(400).json({ error: '请求体中缺少 text 数据' });
+      }
     }
 
     const today = new Date(new Date().getTime() + 8 * 60 * 60 * 1000);
@@ -192,49 +227,68 @@ export default async (req, res) => {
 
     const promptText = `You are a dynamic, semantic AI accounting parser for the "咕噜存钱" app.
 The user may speak naturally in Chinese, English, Malay, or mixed Malaysian daily speech (Manglish/mixed languages).
-Analyze the input text to understand the user's meaning, context, and intent, then return structured JSON accounting data.
+Analyze the input audio or text to understand the user's meaning, context, and intent, then return structured JSON accounting data.
 
 CRITICAL INSTRUCTIONS:
-1. Understand the user's meaning semantically, not through rigid keyword lists. Do not manually restrict to specific lists of food or item names.
-2. Support Chinese, English, Malay, and mixed Malaysian daily speech.
-3. The note field must contain the actual, specific item, product, brand, movie, game, course, place, service, food, or drink that the user actually bought, ate, drank, received, or paid for. Remove filler/action words from the note, such as "我", "今天", "买", "吃", "喝", "花", "用", "买了", "吃了", "喝了", "I", "today", "buy", "eat", "drink", "saya", "beli", "makan", as well as any amount/currency/payment method words.
-4. Do NOT translate or rewrite item names under any circumstances. Keep them in their original language and phrasing spoken by the user (e.g. keep "roti planta" or "Roti Planta", "ice cream" or "Ice Cream", "tayar" or "Tayar", "chicken chop" or "Chicken Chop", "面包" exactly in their original language. Do not translate English/Malay item names into Chinese).
-5. The amount field must contain a number only. Do NOT include currency symbols or text like RM, 块, ringgit, etc.
-6. The category must be mapped based on semantic meaning to one of the following exact categories:
-   - "吃饭": for food, drinks, meals, restaurants, cafes, hawker food, beverages, daily eating/drinking, and dishes from any country (e.g. roti planta, ice cream, chicken chop, nasi lemak, spaghetti, burger).
-   - "交通": for petrol, parking, toll, Grab, taxi, train, bus, transport, car travel cost, and travel movement.
-   - "网购": for online shopping and e-commerce purchases (e.g., Shopee, Lazada, Taobao).
-   - "逛街": for offline shopping, mall purchases, clothes, shoes, and lifestyle shopping.
-   - "日常用品": for groceries, household items, toiletries, cleaning products, and basic daily-use items.
-   - "收入": for income, salary, client payment, freelance payment, commission, allowance, bonus, and money received.
-   - "自定义": when the category is unclear or does not fit the above categories, or for product names, unusual goods, services, tyres (tayar), electronics, movie/game items, etc.
-7. The payment_method must be mapped to one of the following exact strings:
-   - "TnG": if the user mentions Touch 'n Go, TNG, e-wallet, ewallet, 电子钱包, or similar e-wallet payment.
-   - "现金": if the user mentions cash, tunai, or physical money payment.
-   - "银行卡": if the user mentions bank transfer, online banking, DuitNow, card, debit, credit, transfer, or 转账.
-   - "未指定": if no payment method is mentioned. Do NOT force "现金" if cash is not mentioned.
-   - "自定义": if a payment method is mentioned but doesn't fit the above.
-8. Income vs Expense decision:
-   - If the user is spending, buying, eating, drinking, paying, ordering, subscribing, purchasing, or being charged, classify as "expense".
-   - If the user is receiving money, salary, freelance/client payment, commission, bonus, allowance, or income, classify as "income".
-   - If unclear, default to "expense".
-9. Amount cardinality rules:
-   - One amount rule: If the user mentions one amount and multiple items, create one transaction object in "items" and combine the item names into the note.
-   - Multiple amount rule: Only create multiple transaction objects in "items" when the user clearly gives multiple separate item-price pairs.
-10. The transaction_date must be formatted as "YYYY-MM-DD". Calculate it relative to today's date (${currentDate}) if relative terms like "昨天" or "yesterday" are used. Default to "${currentDate}" if no date is mentioned.
-11. If something is uncertain, choose the safest fallback instead of guessing too hard.
-12. The heard_text field in the response must contain the original text input provided by the user.
-13. If you are unsure about an item name, preserve the closest heard phrase in the note. Do not invent, normalize, or translate it.
+1. Directly understand the audio input which contains Chinese, English, Malay, and mixed Malaysian daily speech. 
+2. The note field MUST contain the actual, specific item, product, brand, movie, game, course, place, service, food, or drink that the user actually bought, ate, drank, received, or paid for. Remove filler/action words from the note, such as "我", "今天", "买", "吃", "喝", "花", "用", "买了", "吃了", "喝了".
+3. Do NOT translate or rewrite item names under any circumstances. Keep them in their original language and phrasing exactly as spoken. For example, keep "Nasi Lemak", "Ice Lemon Tea", "Roti Planta", "Chicken Chop", "Tayar", "宫崎骏的 DVD 机" exactly in their original language. Do not translate English/Malay item names into Chinese.
+4. The amount field must contain a number only. Do NOT include currency symbols.
+5. The category must be mapped based on semantic meaning to one of the following exact categories:
+   - "吃饭" (for food, drinks, meals, restaurants, cafes, hawker food, beverages, daily eating/drinking, dishes like nasi lemak, ice lemon tea, roti planta, chicken chop, etc.)
+   - "交通" (for petrol, parking, toll, Grab, taxi, train, bus, transport, car travel cost, tayar/tyre, etc.)
+   - "网购" (for online shopping and e-commerce)
+   - "逛街" (for offline shopping, clothes, shoes, lifestyle)
+   - "日常用品" (for groceries, household items, toiletries)
+   - "收入" (for income, salary, bonus, money received)
+   - "自定义" (when category is unclear, unusual goods, electronics, movie/game items, etc.)
+6. The payment_method must be mapped to one of the following exact strings:
+   - "TnG" (for Touch 'n Go, TNG, e-wallet, 电子钱包)
+   - "现金" (for cash, tunai)
+   - "银行卡" (for bank transfer, online banking, DuitNow, card, debit, credit)
+   - "未指定" (if no payment method mentioned)
+   - "自定义"
+7. Income vs Expense decision: If spending, buying, classifying as "expense". If receiving salary/bonus, "income". Default to "expense".
+8. The transaction_date must be formatted as "YYYY-MM-DD". Calculate relative to today (${currentDate}) if relative terms used. Default to "${currentDate}".
+9. The heard_text field must contain an accurate transcript of what the user actually said in the audio.
+10. If you are unsure about an item name, preserve the closest heard phrase in the note. Do not invent, normalize, or translate it.
 
 Output strict JSON conforming to the response schema. No markdown formatting, no code blocks (do not wrap in \`\`\`json), and no explanations.`;
 
     const modelName = process.env.GEMINI_VOICE_MODEL || process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite';
     const apiKey = process.env.GEMINI_API_KEY;
+    
+    console.log('[DEBUG Backend] gemini_model_used:', modelName);
+    console.log('[DEBUG Backend] has_gemini_key:', !!apiKey);
+
     if (!apiKey) {
+      console.log('[DEBUG Backend] error_stage: Missing GEMINI_API_KEY');
       return res.status(500).json({ error: '后端未配置 GEMINI_API_KEY' });
     }
 
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+
+    const geminiPayloadContents = [];
+    if (mode === 'audio') {
+      geminiPayloadContents.push({
+        parts: [
+          { text: promptText },
+          {
+            inlineData: {
+              mimeType: mimeType,
+              data: audioBase64
+            }
+          }
+        ]
+      });
+    } else {
+      geminiPayloadContents.push({
+        parts: [
+          { text: promptText },
+          { text: `User input: ${textInput}` }
+        ]
+      });
+    }
 
     const geminiResponse = await fetch(geminiUrl, {
       method: 'POST',
@@ -242,14 +296,7 @@ Output strict JSON conforming to the response schema. No markdown formatting, no
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              { text: promptText },
-              { text: `User input: ${textInput}` }
-            ],
-          },
-        ],
+        contents: geminiPayloadContents,
         generationConfig: {
           responseMimeType: 'application/json',
           responseSchema: {
@@ -287,39 +334,57 @@ Output strict JSON conforming to the response schema. No markdown formatting, no
     if (!geminiResponse.ok) {
       const errText = await geminiResponse.text();
       console.error('Gemini API Error:', errText);
+      console.log('[DEBUG Backend] error_stage: Gemini API responded with not ok', geminiResponse.status);
       return res.status(geminiResponse.status).json({ error: `Gemini processing failed: ${errText}` });
     }
 
     const resData = await geminiResponse.json();
     const aiText = resData.candidates?.[0]?.content?.parts?.[0]?.text;
     
+    console.log('[DEBUG Backend] gemini_raw_response:', aiText);
+
     if (!aiText) {
+      console.log('[DEBUG Backend] error_stage: Gemini returned empty text');
       return res.status(500).json({ error: 'Gemini returned empty response' });
     }
 
     const parsed = JSON.parse(aiText);
+    console.log('[DEBUG Backend] parsed_json:', parsed);
 
     // Backend note safety validation:
-    if (parsed.items && Array.isArray(parsed.items)) {
+    // Only perform this if we have a text input. For audio, we trust Gemini's transcript and note extraction more.
+    if (mode === 'text' && parsed.items && Array.isArray(parsed.items)) {
       parsed.items.forEach(item => {
         item.original_note = item.note || ''; // preserve original Gemini note
         item.note = validateAndCleanNote(item.note, textInput);
       });
+    } else if (mode === 'audio' && parsed.items && Array.isArray(parsed.items)) {
+      parsed.items.forEach(item => {
+        item.original_note = item.note || '';
+        // Note: For audio mode, we DO NOT run validateAndCleanNote against a textInput
+        // because we don't have textInput! The `heard_text` generated by Gemini is our textInput.
+        item.note = validateAndCleanNote(item.note, parsed.heard_text || '');
+      });
     }
     
-    return res.status(200).json({
+    const finalResponse = {
       success: true,
-      heard_text: parsed.heard_text || textInput || '',
+      heard_text: parsed.heard_text || textInput || '录音已解析',
       items: parsed.items || [],
       detected_total: parsed.detected_total !== undefined ? parsed.detected_total : null,
       calculated_total: parsed.calculated_total || 0,
       total_matches: parsed.total_matches !== undefined ? parsed.total_matches : true,
       warnings: parsed.warnings || [],
-      transcript: parsed.heard_text || textInput || '', // Compatibility for frontend
-    });
+      transcript: parsed.heard_text || textInput || '录音已解析', // Compatibility for frontend
+    };
+
+    console.log('[DEBUG Backend] final_response_to_frontend:', finalResponse);
+
+    return res.status(200).json(finalResponse);
 
   } catch (error) {
     console.error('API Error:', error);
+    console.log('[DEBUG Backend] error_stage: API Catch Block ->', error.message);
     return res.status(500).json({ error: `Parsing failed: ${error.message}` });
   }
 };
