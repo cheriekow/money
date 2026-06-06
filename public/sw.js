@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gulu-money-v1';
+const CACHE_NAME = 'gulu-cache-v2';
 const STATIC_ASSETS = [
   './',
   './icon-180.png',
@@ -40,48 +40,58 @@ self.addEventListener('fetch', event => {
   const req = event.request;
   const url = new URL(req.url);
 
-  // 1. Navigation requests (HTML pages) -> Network first, do not cache HTML pages
+  // 1. Only cache GET requests
+  if (req.method !== 'GET') {
+    event.respondWith(fetch(req));
+    return;
+  }
+
+  // 2. Only cache http and https schemes (ignore chrome-extension://, data:, etc)
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    event.respondWith(fetch(req));
+    return;
+  }
+
+  // 3. Prefer only caching same-origin app assets
+  if (url.origin !== self.location.origin) {
+    event.respondWith(fetch(req));
+    return;
+  }
+
+  // 4. Do not cache API requests or Supabase
+  if (url.pathname.startsWith('/api/') || url.hostname.includes('supabase.co')) {
+    event.respondWith(fetch(req));
+    return;
+  }
+
+  // Navigation requests (HTML pages) -> Network first
   if (req.mode === 'navigate') {
     event.respondWith(
       fetch(req).catch(() => {
-        // Fallback: If network fails completely, try to serve '/' from cache
         return caches.match('/');
       })
     );
     return;
   }
 
-  // 2. Static assets (JS, CSS, images, fonts, icons) -> Cache first
-  const isStaticAsset = 
-    url.pathname.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|otf|json)$/) ||
-    url.pathname === '/' ||
-    url.pathname === '/money' ||
-    url.pathname.endsWith('/money/');
+  // Static assets -> Cache first, fallback to network
+  event.respondWith(
+    caches.match(req).then(cachedResponse => {
+      if (cachedResponse) {
+        return cachedResponse;
+      }
 
-  if (isStaticAsset) {
-    event.respondWith(
-      caches.match(req).then(cachedResponse => {
-        if (cachedResponse) {
-          return cachedResponse;
+      return fetch(req).then(networkResponse => {
+        if (networkResponse && networkResponse.status === 200) {
+          const cacheCopy = networkResponse.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(req, cacheCopy);
+          });
         }
-
-        // Otherwise fetch, cache, and return
-        return fetch(req).then(networkResponse => {
-          if (networkResponse && networkResponse.status === 200) {
-            const cacheCopy = networkResponse.clone();
-            caches.open(CACHE_NAME).then(cache => {
-              cache.put(req, cacheCopy);
-            });
-          }
-          return networkResponse;
-        }).catch(() => {
-          // If fetch fails, return nothing
-        });
-      })
-    );
-    return;
-  }
-
-  // 3. Other requests (API requests, etc.) -> Network only
-  event.respondWith(fetch(req));
+        return networkResponse;
+      }).catch(() => {
+        // Fetch failed, do nothing
+      });
+    })
+  );
 });

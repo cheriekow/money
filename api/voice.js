@@ -17,25 +17,19 @@ export default async (req, res) => {
   const token = authHeader.split(' ')[1];
   
   if (isProHeader !== 'true' && token !== 'mock-jwt-token-pro-456') {
-    return res.status(403).json({ error: '权限被拦截：此智能语音功能仅限 👑 Pro 尊贵会员使用' });
+    return res.status(403).json({ error: '权限被拦截：此智能功能仅限 👑 Pro 尊贵会员使用' });
   }
 
   try {
-    let audioBase64 = null;
-    let mimeType = 'audio/webm';
     let textInput = null;
 
     // Vercel automatically parses JSON bodies into req.body
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
 
-    if (body.audio) {
-      audioBase64 = body.audio;
-      // Extract clean mimeType, stripping codecs
-      mimeType = (body.mimeType || 'audio/webm').split(';')[0].trim();
-    } else if (body.text) {
+    if (body.text) {
       textInput = body.text;
     } else {
-      return res.status(400).json({ error: '请求体中缺少 audio 或 text 数据' });
+      return res.status(400).json({ error: '请求体中缺少 text 数据' });
     }
 
     const modelName = process.env.GEMINI_VOICE_MODEL || process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite';
@@ -44,9 +38,9 @@ export default async (req, res) => {
       return res.status(500).json({ error: '后端未配置 GEMINI_API_KEY' });
     }
 
-    const promptText = `You are a multilingual Malaysian AI voice accounting parser.
+    const promptText = `You are a multilingual Malaysian AI accounting parser.
 The user may speak Chinese, English, Malay, or mixed Malaysian daily speech.
-Understand the audio meaning directly.
+Understand the text meaning directly.
 Return strict JSON only.
 Do not explain.
 Do not include markdown.
@@ -78,24 +72,6 @@ Parsing rules:
 
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
-    let parts = [];
-    if (audioBase64) {
-      parts = [
-        {
-          inlineData: {
-            mimeType: mimeType,
-            data: audioBase64,
-          },
-        },
-        { text: promptText },
-      ];
-    } else {
-      parts = [
-        { text: promptText },
-        { text: `User input: ${textInput}` }
-      ];
-    }
-
     const geminiResponse = await fetch(geminiUrl, {
       method: 'POST',
       headers: {
@@ -104,7 +80,10 @@ Parsing rules:
       body: JSON.stringify({
         contents: [
           {
-            parts: parts,
+            parts: [
+              { text: promptText },
+              { text: `User input: ${textInput}` }
+            ],
           },
         ],
         generationConfig: {
