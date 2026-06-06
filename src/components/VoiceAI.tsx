@@ -138,23 +138,20 @@ export const VoiceAI: React.FC<VoiceAIProps> = ({
     let success = false;
 
     try {
-      const base64Data = await blobToBase64(audioBlob);
-
-      // Load token from local storage 'user' object if available
       const userString = localStorage.getItem('user');
       const userObj = userString ? JSON.parse(userString) : null;
       const token = userObj?.token || 'mock-jwt-token-pro-456';
 
+      const formData = new FormData();
+      formData.append('audio', audioBlob, 'recording.webm');
+
       const response = await fetch('/api/voice', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
           'x-user-pro-status': isProMember ? 'true' : 'false',
         },
-        body: JSON.stringify({
-          audio: base64Data,
-        }),
+        body: formData,
       });
 
       if (!response.ok) {
@@ -180,57 +177,91 @@ export const VoiceAI: React.FC<VoiceAIProps> = ({
         throw new Error(resData.error || '后端未返回可用的识别结果');
       }
     } catch (err: any) {
-      console.error('Gemini Voice AI via Vercel Proxy failed:', err);
-      triggerFeedback(`在线 AI 识别受阻 (${err.message || '网络错误'})，已切回本地模拟！`, 'info');
+      console.error('Gemini Voice AI failed:', err);
+      // Fallback to SpeechRecognition
+      triggerFeedback('音频解析失败，尝试使用本地语音识别回退...', 'info');
+      await fallbackToSpeechRecognition();
+      success = true; // Assuming fallback handles its own errors or UI state
     }
 
     if (!success) {
-      // Fallback to local simulation if the API call fails
-      await new Promise(resolve => setTimeout(resolve, 1200));
-      
-      const today = new Date();
-      const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-
-      const simulationPool = [
-        {
-          mode: 'local_fallback',
-          sourceLabel: '本地智能解析',
-          rawText: '10块钱，吃了汉堡包还有喝了 Ice Lemon Tea，用 Touch n Go',
-          items: [{ type: 'expense', amount: 10, category: '吃饭', payment_method: 'TnG', transaction_date: dateStr, note: '汉堡包、Ice Lemon Tea' }],
-          detected_total: 10,
-          calculated_total: 10,
-          total_matches: true,
-          warnings: []
-        },
-        {
-          mode: 'local_fallback',
-          sourceLabel: '本地智能解析',
-          rawText: '买了一箱牛奶日常用品一共35',
-          items: [{ type: 'expense', amount: 35, category: '日常用品', payment_method: '', transaction_date: dateStr, note: '一箱牛奶' }],
-          detected_total: 35,
-          calculated_total: 35,
-          total_matches: true,
-          warnings: []
-        },
-        {
-          mode: 'local_fallback',
-          sourceLabel: '本地智能解析',
-          rawText: '收到客户付款 300，bank transfer',
-          items: [
-            { type: 'income', amount: 300, category: '收入', payment_method: '银行卡', transaction_date: dateStr, note: '客户付款' }
-          ],
-          detected_total: null,
-          calculated_total: 300,
-          total_matches: true,
-          warnings: []
-        }
-      ] as AIParsedResult[];
-
-      const result = simulationPool[Math.floor(Math.random() * simulationPool.length)];
-      onAIParsingComplete(result);
+      setIsProcessing(false);
     }
+  };
 
-    setIsProcessing(false);
+  const fallbackToSpeechRecognition = (): Promise<void> => {
+    return new Promise((resolve) => {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        triggerFeedback('您的浏览器不支持语音识别回退功能，请手动记账。', 'info');
+        setIsProcessing(false);
+        resolve();
+        return;
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'zh-CN';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      recognition.onstart = () => {
+        triggerFeedback('回退模式：请再次说出记账内容...', 'info');
+      };
+
+      recognition.onresult = async (event: any) => {
+        const text = event.results[0][0].transcript;
+        try {
+          const userString = localStorage.getItem('user');
+          const userObj = userString ? JSON.parse(userString) : null;
+          const token = userObj?.token || 'mock-jwt-token-pro-456';
+
+          const response = await fetch('/api/voice', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+              'x-user-pro-status': isProMember ? 'true' : 'false',
+            },
+            body: JSON.stringify({ text }),
+          });
+
+          if (!response.ok) throw new Error('API error');
+          const resData = await response.json();
+          if (resData.success) {
+            onAIParsingComplete({
+              mode: 'ai',
+              sourceLabel: 'AI 解析 (回退)',
+              rawText: resData.transcript || text,
+              items: resData.items || [],
+              detected_total: resData.detected_total || null,
+              calculated_total: resData.calculated_total || 0,
+              total_matches: resData.total_matches !== undefined ? resData.total_matches : true,
+              warnings: []
+            });
+            triggerFeedback('语音回退解析成功！', 'success');
+          } else {
+            throw new Error('解析失败');
+          }
+        } catch (e) {
+          triggerFeedback('回退解析也失败了，请手动记账喵~', 'info');
+        } finally {
+          setIsProcessing(false);
+          resolve();
+        }
+      };
+
+      recognition.onerror = () => {
+        triggerFeedback('回退识别错误，请手动记账喵~', 'info');
+        setIsProcessing(false);
+        resolve();
+      };
+
+      recognition.onend = () => {
+        // Fallback ends
+      };
+
+      recognition.start();
+    });
   };
 
   return (
@@ -257,7 +288,7 @@ export const VoiceAI: React.FC<VoiceAIProps> = ({
                     <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
                   </span>
                   <div className="text-left">
-                    <p className="text-xs font-black text-white">正在倾听您的记账口令...</p>
+                    <p className="text-xs font-black text-white">咕噜正在听你说话...</p>
                     <p className="text-[9px] text-neutral-400 font-medium">请说如：“买牛奶花了35元”</p>
                   </div>
                 </div>
@@ -279,7 +310,7 @@ export const VoiceAI: React.FC<VoiceAIProps> = ({
               >
                 <Icons.Loader2 size={16} className="animate-spin text-amber-400 shrink-0" />
                 <div className="text-left">
-                  <p className="text-xs font-black text-white">AI 智能记账意图分析中...</p>
+                  <p className="text-xs font-black text-white">正在整理记账信息...</p>
                   <p className="text-[9px] text-neutral-400 font-medium">正在过滤杂音，匹配消费要素和预算</p>
                 </div>
               </motion.div>
