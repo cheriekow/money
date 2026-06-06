@@ -32,43 +32,53 @@ export default async (req, res) => {
       return res.status(400).json({ error: '请求体中缺少 text 数据' });
     }
 
+    const today = new Date(new Date().getTime() + 8 * 60 * 60 * 1000);
+    const year = today.getUTCFullYear();
+    const month = String(today.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(today.getUTCDate()).padStart(2, '0');
+    const currentDate = `${year}-${month}-${day}`;
+
+    const promptText = `You are a dynamic, semantic AI accounting parser for the "咕噜存钱" app.
+The user may speak naturally in Chinese, English, Malay, or mixed Malaysian daily speech (Manglish/mixed languages).
+Analyze the input text to understand the user's meaning, context, and intent, then return structured JSON accounting data.
+
+CRITICAL INSTRUCTIONS:
+1. Understand the user's meaning semantically, not through rigid keyword lists. Do not manually restrict to specific lists of food or item names.
+2. Support Chinese, English, Malay, and mixed Malaysian daily speech.
+3. Preserve names of food, products, brands, movies, games, courses, places, and services in their original language/form as much as possible. Do not simplify or translate specific names unless absolutely necessary (e.g. keep "宫崎骏的 DVD 机", "Nasi Lemak", "Ice Lemon Tea" exactly as is).
+4. The note field should contain what the user actually bought, ate, drank, received, or paid for.
+5. The amount field must contain a number only. Do NOT include currency symbols or text like RM, 块, ringgit, etc.
+6. The category must be mapped based on semantic meaning to one of the following exact categories:
+   - "吃饭": for food, drinks, meals, restaurants, cafes, hawker food, beverages, and daily eating/drinking.
+   - "交通": for petrol, parking, toll, Grab, taxi, train, bus, transport, and travel movement.
+   - "网购": for online shopping and e-commerce purchases (e.g., Shopee, Lazada, Taobao).
+   - "逛街": for offline shopping, mall purchases, clothes, shoes, and lifestyle shopping.
+   - "日常用品": for groceries, household items, toiletries, cleaning products, and basic daily-use items.
+   - "收入": for income, salary, client payment, freelance payment, commission, allowance, and money received.
+   - "自定义": when the category is unclear or does not fit the above categories.
+7. The payment_method must be mapped to one of the following exact strings:
+   - "TnG": if the user mentions Touch 'n Go, TNG, e-wallet, or similar e-wallet payment.
+   - "现金": if the user mentions cash or physical money payment.
+   - "银行卡": if the user mentions bank transfer, card, DuitNow, online banking, debit, or credit card.
+   - "未指定": if no payment method is mentioned. Do NOT force "现金" if cash is not mentioned.
+   - "自定义": if a payment method is mentioned but doesn't fit the above.
+8. Income vs Expense decision:
+   - If the user is spending, buying, eating, drinking, paying, ordering, subscribing, purchasing, or being charged, classify as "expense".
+   - If the user is receiving money, salary, freelance/client payment, commission, bonus, allowance, or income, classify as "income".
+   - If unclear, default to "expense".
+9. Amount cardinality rules:
+   - One amount rule: If the user mentions one amount and multiple items, create one transaction object in "items" and combine the item names into the note.
+   - Multiple amount rule: Only create multiple transaction objects in "items" when the user clearly gives multiple separate item-price pairs.
+10. The transaction_date must be formatted as "YYYY-MM-DD". Calculate it relative to today's date (${currentDate}) if relative terms like "昨天" (yesterday) or "yesterday" are used. Default to "${currentDate}" if no date is mentioned.
+11. If something is uncertain, choose the safest fallback instead of guessing too hard.
+
+Output strict JSON conforming to the response schema. No markdown formatting, no code blocks (do not wrap in \`\`\`json), and no explanations.`;
+
     const modelName = process.env.GEMINI_VOICE_MODEL || process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite';
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return res.status(500).json({ error: '后端未配置 GEMINI_API_KEY' });
     }
-
-    const promptText = `You are a multilingual Malaysian AI accounting parser.
-The user may speak Chinese, English, Malay, or mixed Malaysian daily speech.
-Understand the text meaning directly.
-Return strict JSON only.
-Do not explain.
-Do not include markdown.
-
-Parsing rules:
-1. If the user mentions spending, buying, eating, drinking, paying, ordering, subscribing, or purchasing, classify as "expense".
-2. If the user mentions receiving money, salary, client payment, income, commission, or freelance payment, classify as "income".
-3. If unclear, default to "expense".
-4. Extract only the numeric amount.
-5. Put the actual item/service/product name into note.
-6. Preserve item names as much as possible.
-7. Do not translate or rewrite brand names, product names, movie names, game names, or model names.
-8. Do not include amount words or payment method words in note.
-9. If the user says one amount and multiple items, create one transaction and combine the items into note.
-10. Only split into multiple transactions when there are clearly multiple separate amounts.
-11. Detect Touch 'n Go / TNG / e-wallet as payment_method: "TnG".
-12. Detect cash / tunai / 现金 as payment_method: "现金".
-13. Detect card / bank transfer / DuitNow / online banking as payment_method: "银行卡".
-14. If no payment method is mentioned, return payment_method as "未指定".
-15. Use only existing app categories:
-   - 吃饭
-   - 逛街
-   - 网购
-   - 日常用品
-   - 交通
-   - 收入
-   - 自定义
-16. If category is uncertain, use "自定义".`;
 
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 

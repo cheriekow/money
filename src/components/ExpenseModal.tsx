@@ -142,7 +142,7 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
         setCategory(prefilledExpense.category || Object.keys(catsToUse)[0] || '');
         setDate(prefilledExpense.date || '');
         setNote(prefilledExpense.note || '');
-        setSelectedPaymentMethodId(prefilledExpense.paymentMethodId || 'pay-cash');
+        setSelectedPaymentMethodId(prefilledExpense.paymentMethodId || (paymentMethods && paymentMethods[0] ? paymentMethods[0].id : 'pay-cash'));
       } else {
         const today = new Date();
         const yyyy = today.getFullYear();
