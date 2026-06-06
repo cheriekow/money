@@ -1,0 +1,6 @@
+{
+  "name": "Expense Tracker",
+  "description": "A beautiful, warm, creamy single-page expense tracker with a curved segment ring summary chart.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

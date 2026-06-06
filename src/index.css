@@ -1,0 +1,628 @@
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Quicksand", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-rounded: "Quicksand", "PingFang SC", "Microsoft YaHei", sans-serif;
+  
+  --color-bg-cream: #f7f3e8;
+  --color-pastel-pink: #fbc4d0;
+  --color-pastel-yellow: #fcd581;
+  --color-pastel-green: #90be6d;
+  --color-pastel-blue: #a3c4f3;
+  --color-pastel-orange: #fca311;
+  
+  --animate-fade-in: fade-in 0.3s ease-out;
+  --animate-scale-up: scale-up 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  --animate-slide-up: slide-up 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scale-up {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+/* Completely hide scrollbars globally for a native-app look and feel */
+::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+* {
+  -ms-overflow-style: none !important; /* IE/Edge */
+  scrollbar-width: none !important; /* Firefox */
+}
+
+body {
+  background-color: #f7f3e8;
+  color: #1a1a1a;
+  font-family: var(--font-sans);
+  overscroll-behavior-y: none; /* Prevent scroll bounce and pull-to-refresh */
+}
+
+/* Premium PWA Mobile Safe Area Adjustments */
+#app-global-header {
+  padding-top: env(safe-area-inset-top, 0px) !important;
+}
+
+#floating-action-deck {
+  position: fixed !important;
+  bottom: env(safe-area-inset-bottom, 0px) !important; /* 手机端：完全贴靠最底部（自动支持刘海屏安全区） */
+  left: 0 !important;
+  right: 0 !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  transform: none !important; /* 强力禁用一切平移位移，彻底杜绝偏斜截断 */
+  width: calc(100% - 2rem) !important; /* 两侧自适应留白 */
+  max-width: 350px !important; /* 手机端精致紧凑的宽度 */
+  border-radius: 9999px !important; /* 完美的完全圆角胶囊造型 */
+  padding-bottom: 14px !important; /* 原汁原味精致底间距，防止图标太靠边 */
+  z-index: 50 !important; /* 保证绝对顶层 */
+}
+
+@media (min-width: 640px) {
+  #floating-action-deck {
+    max-width: 450px !important; /* 电脑端更大气、更宽敞的宽度 */
+    bottom: 0px !important; /* 电脑端完全贴靠最底部 */
+  }
+}
+
+/* Mobile full-height viewport fix */
+@media (max-width: 768px) {
+  #app-root-view {
+    min-h-screen: 100vh;
+    min-height: -webkit-fill-available;
+  }
+}
+
+/* ==========================================
+   个性化主题系统 (Personalized Theme System)
+   ========================================== */
+
+/* --- 1. 默认主题：温润奶香 (Creamy Pastel - Default) --- */
+:root, [data-theme="cream"] {
+  --color-bg: #f7f3e8;
+  --color-text: #1a1a1a;
+  --color-text-secondary: #525252; /* 恢复原汁原味舒适的极简灰 */
+  --color-text-tertiary: #a3a3a3;
+  
+  --color-card: rgba(255, 255, 255, 0.8);
+  --color-card-solid: #ffffff;
+  --color-card-border: rgba(255, 255, 255, 0.5);
+  
+  --color-input-bg: rgba(255, 255, 255, 0.7);
+  --color-input-border: #e5e5e5;
+  
+  --color-btn-primary: #1a1a1a;
+  --color-btn-primary-hover: #000000;
+  --color-btn-primary-text: #ffffff;
+  
+  --color-accent: #FBCFE8; /* 柔美标志粉 */
+  --color-accent-text: #1a1a1a;
+
+  --color-active-badge-bg: rgba(255, 255, 255, 0.15);
+  --color-active-badge-text: #FBCFE8;
+
+  --color-card-dark: #1a1a1a;
+  --color-card-dark-text: #ffffff;
+
+  --color-active-border: #1a1a1a;
+}
+
+/* --- 2. 极客赛博 (Cyberpunk Dark Mode) --- */
+[data-theme="cyberpunk"] {
+  --color-bg: #0b0f19; /* 舒适深夜暗蓝，极度护眼，告别刺眼纯黑 */
+  --color-text: #ffffff; /* 纯白高亮文字，看字不费劲 */
+  --color-text-secondary: #94a3b8; /* 舒缓板岩灰 */
+  --color-text-tertiary: #64748b;
+  
+  --color-card: #161e2e; /* 优雅的深石墨卡片背景 */
+  --color-card-solid: #161e2e;
+  --color-card-border: rgba(56, 189, 248, 0.25); /* 霓虹青边缘 */
+  
+  --color-input-bg: #0f172a; /* 极深输入区底色 */
+  --color-input-border: #334155;
+  
+  --color-btn-primary: #38bdf8; /* 激光青 */
+  --color-btn-primary-hover: #0ea5e9;
+  --color-btn-primary-text: #0b0f19; /* 激光青上的文字，黑字反差大，看得清 */
+  
+  --color-accent: #38bdf8; /* 激光青高亮 */
+  --color-accent-text: #0b0f19;
+
+  --color-active-badge-bg: rgba(11, 15, 25, 0.15);
+  --color-active-badge-text: #0b0f19;
+
+  --color-card-dark: #161e2e;
+  --color-card-dark-text: #ffffff;
+
+  --color-active-border: #38bdf8;
+}
+
+/* --- 3. 抹茶森林 (Matcha Forest - Recommended) --- */
+[data-theme="matcha"] {
+  --color-bg: #eff2eb; /* 抹茶乳白 */
+  --color-text: #1b2e1a; /* 森林深绿 */
+  --color-text-secondary: #5a6e58; /* 灰绿副文本 */
+  --color-text-tertiary: #8f9e8a;
+  
+  --color-card: #ffffff; /* 纯白卡片 */
+  --color-card-solid: #ffffff;
+  --color-card-border: rgba(90, 110, 88, 0.2);
+  
+  --color-input-bg: #f4f7f1; /* 极轻苔绿背景 */
+  --color-input-border: #cbd5c5;
+  
+  --color-btn-primary: #3e6b35; /* 森林深绿 */
+  --color-btn-primary-hover: #2d5225;
+  --color-btn-primary-text: #eff2eb;
+  
+  --color-accent: #3e6b35; /* 森林深绿高亮 */
+  --color-accent-text: #eff2eb;
+
+  --color-active-badge-bg: rgba(239, 242, 235, 0.15);
+  --color-active-badge-text: #eff2eb;
+
+  --color-card-dark: #cbd5c5; /* 抹茶森林下用莫兰迪浅绿，打破单一色调 */
+  --color-card-dark-text: #1b2e1a; /* 搭配森林深绿色文字，对比极清晰 */
+
+  --color-active-border: #1b2e1a;
+}
+
+/* --- 4. 樱花汽水 (Sakura Soda) --- */
+[data-theme="sakura"] {
+  --color-bg: #fdf8f9; /* 带有极淡粉紫的清透白 */
+  --color-text: #2e151b; /* 浓郁黑加仑深紫红，极佳对比度 */
+  --color-text-secondary: #754f59; /* 柔和豆沙莓粉 */
+  --color-text-tertiary: #a88d93;
+  
+  --color-card: rgba(255, 255, 255, 0.85);
+  --color-card-solid: #ffffff;
+  --color-card-border: rgba(226, 135, 130, 0.25);
+  
+  --color-input-bg: rgba(255, 255, 255, 0.7);
+  --color-input-border: #f3dadb;
+  
+  --color-btn-primary: #e28782; /* 暖落樱粉 */
+  --color-btn-primary-hover: #d17570;
+  --color-btn-primary-text: #ffffff;
+  
+  --color-accent: #ffb7b2; /* 樱粉招牌高亮 */
+  --color-accent-text: #2e151b;
+
+  --color-active-badge-bg: rgba(255, 255, 255, 0.2);
+  --color-active-badge-text: #2e151b;
+
+  --color-card-dark: #ffe4e1; /* 浅桃粉色，形成非对称甜美呼应 */
+  --color-card-dark-text: #2e151b;
+
+  --color-active-border: #754f59;
+}
+
+/* --- 5. 冰酿海盐 (Sea Salt Ice) --- */
+[data-theme="ocean"] {
+  --color-bg: #f0f5fa; /* 清爽的海盐泡沫淡蓝 */
+  --color-text: #122333; /* 深邃的极地海海蓝 */
+  --color-text-secondary: #51687d; /* 海盐冰雾灰蓝 */
+  --color-text-tertiary: #849cb0;
+  
+  --color-card: #ffffff;
+  --color-card-solid: #ffffff;
+  --color-card-border: rgba(58, 134, 200, 0.15);
+  
+  --color-input-bg: #f5f8fa;
+  --color-input-border: #d4e0eb;
+  
+  --color-btn-primary: #3a86c8; /* 海蓝色 */
+  --color-btn-primary-hover: #2972b2;
+  --color-btn-primary-text: #ffffff;
+  
+  --color-accent: #90e0ef; /* 冰蓝高亮 */
+  --color-accent-text: #122333;
+
+  --color-active-badge-bg: rgba(255, 255, 255, 0.25); /* 提升亮色背景卡片上的对比度，呈精美气泡感 */
+  --color-active-badge-text: #122333;
+
+  --color-card-dark: #bde0fe; /* 浅海蓝，形成双色清新呼应 */
+  --color-card-dark-text: #122333;
+
+  --color-active-border: #122333;
+}
+
+/* --- 6. 麦香卡其 (Warm Khaki Sand) --- */
+[data-theme="citrus"] {
+  --color-bg: #f4f0e6; /* 温馨舒适的麦香暖沙底色 */
+  --color-text: #3e332b; /* 优雅柔和的深焦糖褐字，温和高对比 */
+  --color-text-secondary: #7d6b5c; /* 舒缓的炭烧可可褐 */
+  --color-text-tertiary: #b5a89b; /* 麦穗燕麦浅灰褐 */
+  
+  --color-card: #ffffff;
+  --color-card-solid: #ffffff;
+  --color-card-border: rgba(140, 123, 108, 0.15); /* 柔和燕麦边框 */
+  
+  --color-input-bg: #faf6ee; /* 极轻燕麦奶底 */
+  --color-input-border: #e2dacd; /* 麦沙灰褐输入边框 */
+  
+  --color-btn-primary: #8c7b6c; /* 高级温暖的拿铁卡其色 */
+  --color-btn-primary-hover: #78685b; /* 稍深一号的拿铁褐 */
+  --color-btn-primary-text: #ffffff;
+  
+  --color-accent: #ebdccb; /* 舒缓温润的燕麦卡其金 */
+  --color-accent-text: #3e332b;
+
+  --color-active-badge-bg: rgba(255, 255, 255, 0.25); /* 提升对比度，白气泡背景 */
+  --color-active-badge-text: #3e332b; /* 深焦糖字 */
+
+  --color-card-dark: #ebdccb; /* 温暖燕麦呼应色 */
+  --color-card-dark-text: #3e332b;
+
+  --color-active-border: #3e332b;
+}
+
+/* ==========================================
+   Tailwind 类全局向下兼容自动映射 (Non-Default Themes)
+   ========================================== */
+
+/* --- A. 极客赛博主题映射 --- */
+[data-theme="cyberpunk"] .bg-white,
+[data-theme="cyberpunk"] .bg-white\/80,
+[data-theme="cyberpunk"] .bg-white\/60,
+[data-theme="cyberpunk"] .bg-white\/30 {
+  background-color: var(--color-card) !important;
+  color: var(--color-text) !important;
+}
+
+[data-theme="cyberpunk"] .bg-neutral-50,
+[data-theme="cyberpunk"] .bg-neutral-50\/50,
+[data-theme="cyberpunk"] .bg-neutral-50\/70,
+[data-theme="cyberpunk"] .bg-neutral-100,
+[data-theme="cyberpunk"] .bg-\[\#BFDBFE\]\/10 {
+  background-color: var(--color-input-bg) !important;
+}
+
+[data-theme="cyberpunk"] .text-neutral-900,
+[data-theme="cyberpunk"] .text-neutral-955,
+[data-theme="cyberpunk"] .text-neutral-850,
+[data-theme="cyberpunk"] .text-neutral-800,
+[data-theme="cyberpunk"] .text-neutral-700,
+[data-theme="cyberpunk"] .text-neutral-750 {
+  color: var(--color-text) !important;
+}
+
+[data-theme="cyberpunk"] .text-neutral-600,
+[data-theme="cyberpunk"] .text-neutral-500,
+[data-theme="cyberpunk"] .text-neutral-400 {
+  color: var(--color-text-secondary) !important;
+}
+
+[data-theme="cyberpunk"] .border-neutral-200,
+[data-theme="cyberpunk"] .border-neutral-205,
+[data-theme="cyberpunk"] .border-neutral-250,
+[data-theme="cyberpunk"] .border-neutral-300,
+[data-theme="cyberpunk"] .border-neutral-100,
+[data-theme="cyberpunk"] .border-white\/50 {
+  border-color: var(--color-card-border) !important;
+}
+
+[data-theme="cyberpunk"] .bg-neutral-950,
+[data-theme="cyberpunk"] .bg-neutral-900,
+[data-theme="cyberpunk"] .bg-black {
+  background-color: var(--color-btn-primary) !important;
+  color: var(--color-btn-primary-text) !important;
+}
+
+[data-theme="cyberpunk"] .hover\:bg-black:hover,
+[data-theme="cyberpunk"] .hover\:bg-neutral-800:hover,
+[data-theme="cyberpunk"] .hover\:bg-neutral-900:hover {
+  background-color: var(--color-btn-primary-hover) !important;
+}
+
+[data-theme="cyberpunk"] .border-neutral-955,
+[data-theme="cyberpunk"] .border-neutral-950,
+[data-theme="cyberpunk"] .border-black,
+[data-theme="cyberpunk"] .border-neutral-900 {
+  border-color: var(--color-active-border) !important;
+}
+
+/* 针对赛博朋克输入框的特别处理 */
+[data-theme="cyberpunk"] input,
+[data-theme="cyberpunk"] select,
+[data-theme="cyberpunk"] textarea {
+  background-color: var(--color-input-bg) !important;
+  border-color: var(--color-input-border) !important;
+  color: var(--color-text) !important;
+}
+
+
+/* --- B. 抹茶森林主题映射 --- */
+[data-theme="matcha"] .bg-white,
+[data-theme="matcha"] .bg-white\/80,
+[data-theme="matcha"] .bg-white\/60,
+[data-theme="matcha"] .bg-white\/30 {
+  background-color: var(--color-card) !important;
+  color: var(--color-text) !important;
+}
+
+[data-theme="matcha"] .bg-neutral-50,
+[data-theme="matcha"] .bg-neutral-50\/50,
+[data-theme="matcha"] .bg-neutral-50\/70,
+[data-theme="matcha"] .bg-neutral-100,
+[data-theme="matcha"] .bg-\[\#BFDBFE\]\/10 {
+  background-color: var(--color-input-bg) !important;
+}
+
+[data-theme="matcha"] .text-neutral-900,
+[data-theme="matcha"] .text-neutral-955,
+[data-theme="matcha"] .text-neutral-850,
+[data-theme="matcha"] .text-neutral-800,
+[data-theme="matcha"] .text-neutral-700,
+[data-theme="matcha"] .text-neutral-750 {
+  color: var(--color-text) !important;
+}
+
+[data-theme="matcha"] .text-neutral-600,
+[data-theme="matcha"] .text-neutral-500,
+[data-theme="matcha"] .text-neutral-400 {
+  color: var(--color-text-secondary) !important;
+}
+
+[data-theme="matcha"] .border-neutral-200,
+[data-theme="matcha"] .border-neutral-205,
+[data-theme="matcha"] .border-neutral-250,
+[data-theme="matcha"] .border-neutral-300,
+[data-theme="matcha"] .border-neutral-100,
+[data-theme="matcha"] .border-white\/50 {
+  border-color: var(--color-card-border) !important;
+}
+
+[data-theme="matcha"] .bg-neutral-950,
+[data-theme="matcha"] .bg-neutral-900,
+[data-theme="matcha"] .bg-black {
+  background-color: var(--color-btn-primary) !important;
+  color: var(--color-btn-primary-text) !important;
+}
+
+[data-theme="matcha"] .hover\:bg-black:hover,
+[data-theme="matcha"] .hover\:bg-neutral-800:hover,
+[data-theme="matcha"] .hover\:bg-neutral-900:hover {
+  background-color: var(--color-btn-primary-hover) !important;
+}
+
+[data-theme="matcha"] .border-neutral-955,
+[data-theme="matcha"] .border-neutral-950,
+[data-theme="matcha"] .border-black,
+[data-theme="matcha"] .border-neutral-900 {
+  border-color: var(--color-active-border) !important;
+}
+
+/* 针对抹茶森林输入框的特别处理 */
+[data-theme="matcha"] input,
+[data-theme="matcha"] select,
+[data-theme="matcha"] textarea {
+  background-color: var(--color-input-bg) !important;
+  border-color: var(--color-input-border) !important;
+  color: var(--color-text) !important;
+}
+
+/* --- C. 樱花汽水主题映射 --- */
+[data-theme="sakura"] .bg-white,
+[data-theme="sakura"] .bg-white\/80,
+[data-theme="sakura"] .bg-white\/60,
+[data-theme="sakura"] .bg-white\/30 {
+  background-color: var(--color-card) !important;
+  color: var(--color-text) !important;
+}
+
+[data-theme="sakura"] .bg-neutral-50,
+[data-theme="sakura"] .bg-neutral-50\/50,
+[data-theme="sakura"] .bg-neutral-50\/70,
+[data-theme="sakura"] .bg-neutral-100,
+[data-theme="sakura"] .bg-\[\#BFDBFE\]\/10 {
+  background-color: var(--color-input-bg) !important;
+}
+
+[data-theme="sakura"] .text-neutral-900,
+[data-theme="sakura"] .text-neutral-955,
+[data-theme="sakura"] .text-neutral-850,
+[data-theme="sakura"] .text-neutral-800,
+[data-theme="sakura"] .text-neutral-700,
+[data-theme="sakura"] .text-neutral-750 {
+  color: var(--color-text) !important;
+}
+
+[data-theme="sakura"] .text-neutral-600,
+[data-theme="sakura"] .text-neutral-500,
+[data-theme="sakura"] .text-neutral-400 {
+  color: var(--color-text-secondary) !important;
+}
+
+[data-theme="sakura"] .border-neutral-200,
+[data-theme="sakura"] .border-neutral-205,
+[data-theme="sakura"] .border-neutral-250,
+[data-theme="sakura"] .border-neutral-300,
+[data-theme="sakura"] .border-neutral-100,
+[data-theme="sakura"] .border-white\/50 {
+  border-color: var(--color-card-border) !important;
+}
+
+[data-theme="sakura"] .bg-neutral-950,
+[data-theme="sakura"] .bg-neutral-900,
+[data-theme="sakura"] .bg-black {
+  background-color: var(--color-btn-primary) !important;
+  color: var(--color-btn-primary-text) !important;
+}
+
+[data-theme="sakura"] .hover\:bg-black:hover,
+[data-theme="sakura"] .hover\:bg-neutral-800:hover,
+[data-theme="sakura"] .hover\:bg-neutral-900:hover {
+  background-color: var(--color-btn-primary-hover) !important;
+}
+
+[data-theme="sakura"] .border-neutral-955,
+[data-theme="sakura"] .border-neutral-950,
+[data-theme="sakura"] .border-black,
+[data-theme="sakura"] .border-neutral-900 {
+  border-color: var(--color-active-border) !important;
+}
+
+[data-theme="sakura"] input,
+[data-theme="sakura"] select,
+[data-theme="sakura"] textarea {
+  background-color: var(--color-input-bg) !important;
+  border-color: var(--color-input-border) !important;
+  color: var(--color-text) !important;
+}
+
+/* --- D. 冰酿海盐主题映射 --- */
+[data-theme="ocean"] .bg-white,
+[data-theme="ocean"] .bg-white\/80,
+[data-theme="ocean"] .bg-white\/60,
+[data-theme="ocean"] .bg-white\/30 {
+  background-color: var(--color-card) !important;
+  color: var(--color-text) !important;
+}
+
+[data-theme="ocean"] .bg-neutral-50,
+[data-theme="ocean"] .bg-neutral-50\/50,
+[data-theme="ocean"] .bg-neutral-50\/70,
+[data-theme="ocean"] .bg-neutral-100,
+[data-theme="ocean"] .bg-\[\#BFDBFE\]\/10 {
+  background-color: var(--color-input-bg) !important;
+}
+
+[data-theme="ocean"] .text-neutral-900,
+[data-theme="ocean"] .text-neutral-955,
+[data-theme="ocean"] .text-neutral-850,
+[data-theme="ocean"] .text-neutral-800,
+[data-theme="ocean"] .text-neutral-700,
+[data-theme="ocean"] .text-neutral-750 {
+  color: var(--color-text) !important;
+}
+
+[data-theme="ocean"] .text-neutral-600,
+[data-theme="ocean"] .text-neutral-500,
+[data-theme="ocean"] .text-neutral-400 {
+  color: var(--color-text-secondary) !important;
+}
+
+[data-theme="ocean"] .border-neutral-200,
+[data-theme="ocean"] .border-neutral-205,
+[data-theme="ocean"] .border-neutral-250,
+[data-theme="ocean"] .border-neutral-300,
+[data-theme="ocean"] .border-neutral-100,
+[data-theme="ocean"] .border-white\/50 {
+  border-color: var(--color-card-border) !important;
+}
+
+[data-theme="ocean"] .bg-neutral-955,
+[data-theme="ocean"] .bg-neutral-950,
+[data-theme="ocean"] .bg-neutral-900,
+[data-theme="ocean"] .bg-black {
+  background-color: var(--color-btn-primary) !important;
+  color: var(--color-btn-primary-text) !important;
+}
+
+[data-theme="ocean"] .hover\:bg-black:hover,
+[data-theme="ocean"] .hover\:bg-neutral-800:hover,
+[data-theme="ocean"] .hover\:bg-neutral-900:hover {
+  background-color: var(--color-btn-primary-hover) !important;
+}
+
+[data-theme="ocean"] .border-neutral-955,
+[data-theme="ocean"] .border-neutral-950,
+[data-theme="ocean"] .border-black,
+[data-theme="ocean"] .border-neutral-900 {
+  border-color: var(--color-active-border) !important;
+}
+
+[data-theme="ocean"] input,
+[data-theme="ocean"] select,
+[data-theme="ocean"] textarea {
+  background-color: var(--color-input-bg) !important;
+  border-color: var(--color-input-border) !important;
+  color: var(--color-text) !important;
+}
+
+/* --- E. 蜜橘气泡主题映射 --- */
+[data-theme="citrus"] .bg-white,
+[data-theme="citrus"] .bg-white\/80,
+[data-theme="citrus"] .bg-white\/60,
+[data-theme="citrus"] .bg-white\/30 {
+  background-color: var(--color-card) !important;
+  color: var(--color-text) !important;
+}
+
+[data-theme="citrus"] .bg-neutral-50,
+[data-theme="citrus"] .bg-neutral-50\/50,
+[data-theme="citrus"] .bg-neutral-50\/70,
+[data-theme="citrus"] .bg-neutral-100,
+[data-theme="citrus"] .bg-\[\#BFDBFE\]\/10 {
+  background-color: var(--color-input-bg) !important;
+}
+
+[data-theme="citrus"] .text-neutral-900,
+[data-theme="citrus"] .text-neutral-955,
+[data-theme="citrus"] .text-neutral-850,
+[data-theme="citrus"] .text-neutral-800,
+[data-theme="citrus"] .text-neutral-700,
+[data-theme="citrus"] .text-neutral-750 {
+  color: var(--color-text) !important;
+}
+
+[data-theme="citrus"] .text-neutral-600,
+[data-theme="citrus"] .text-neutral-500,
+[data-theme="citrus"] .text-neutral-400 {
+  color: var(--color-text-secondary) !important;
+}
+
+[data-theme="citrus"] .border-neutral-200,
+[data-theme="citrus"] .border-neutral-205,
+[data-theme="citrus"] .border-neutral-250,
+[data-theme="citrus"] .border-neutral-300,
+[data-theme="citrus"] .border-neutral-100,
+[data-theme="citrus"] .border-white\/50 {
+  border-color: var(--color-card-border) !important;
+}
+
+[data-theme="citrus"] .bg-neutral-955,
+[data-theme="citrus"] .bg-neutral-950,
+[data-theme="citrus"] .bg-neutral-900,
+[data-theme="citrus"] .bg-black {
+  background-color: var(--color-btn-primary) !important;
+  color: var(--color-btn-primary-text) !important;
+}
+
+[data-theme="citrus"] .hover\:bg-black:hover,
+[data-theme="citrus"] .hover\:bg-neutral-800:hover,
+[data-theme="citrus"] .hover\:bg-neutral-900:hover {
+  background-color: var(--color-btn-primary-hover) !important;
+}
+
+[data-theme="citrus"] .border-neutral-955,
+[data-theme="citrus"] .border-neutral-950,
+[data-theme="citrus"] .border-black,
+[data-theme="citrus"] .border-neutral-900 {
+  border-color: var(--color-active-border) !important;
+}
+
+[data-theme="citrus"] input,
+[data-theme="citrus"] select,
+[data-theme="citrus"] textarea {
+  background-color: var(--color-input-bg) !important;
+  border-color: var(--color-input-border) !important;
+  color: var(--color-text) !important;
+}
+
+
+
