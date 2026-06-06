@@ -1,6 +1,95 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+function validateAndCleanNote(note, heardText) {
+  const fillers = [
+    // Chinese
+    '我', '今天', '刚刚', '然后', '还有', '吃了', '吃', '喝了', '喝', '买了', '买', '花了', '花', '用', '支付', '付款', '消费', '了', '的',
+    // English
+    'i', 'today', 'just', 'and', 'then', 'ate', 'eat', 'drank', 'drink', 'bought', 'buy', 'spent', 'paid', 'using', 'with',
+    // Malay
+    'saya', 'hari ini', 'tadi', 'dan', 'makan', 'minum', 'beli', 'bayar', 'guna'
+  ];
+
+  const paymentWords = [
+    'touch n go', 'touch \'n go', 'tng', 'e-wallet', '电子钱包',
+    'cash', 'tunai', '现金',
+    'bank transfer', 'online banking', 'duitnow', 'debit card', 'credit card', 'card', 'bank', '转账', '银行卡'
+  ];
+
+  const genericWords = [
+    'payment', 'expense', 'income', '吃饭', '逛街', '网购', '日常用品', '交通', '收入', '自定义',
+    '买东西', '消费', '支出', '买了的东西', '东西', '买的东西', '买了东西', '收支', '记账'
+  ];
+
+  const isGenericOrEmpty = (str) => {
+    if (!str) return true;
+    const cleanStr = str.toLowerCase().trim();
+    if (cleanStr.length === 0) return true;
+    if (genericWords.includes(cleanStr)) return true;
+    
+    // Check if it consists only of fillers or payments
+    const words = cleanStr.split(/[\s,，、]+/);
+    const nonFillerWords = words.filter(w => w && !fillers.includes(w) && !paymentWords.includes(w));
+    if (nonFillerWords.length === 0) return true;
+    
+    return false;
+  };
+
+  const getCleanWords = (str) => {
+    let temp = str.toLowerCase();
+    for (const word of [...fillers, ...paymentWords, ...genericWords]) {
+      const isEnglish = /^[a-zA-Z]+$/.test(word);
+      const regexStr = isEnglish ? `\\b${word}\\b` : word;
+      const regex = new RegExp(regexStr, 'gi');
+      temp = temp.replace(regex, '');
+    }
+    return temp.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]+/g, '');
+  };
+
+  const isRelated = (n, h) => {
+    const cleanN = getCleanWords(n);
+    const cleanH = getCleanWords(h);
+    if (!cleanN || !cleanH) return false;
+    const nChars = [...cleanN];
+    const matches = nChars.filter(char => cleanH.includes(char));
+    return matches.length > 0;
+  };
+
+  if (note && !isGenericOrEmpty(note) && isRelated(note, heardText)) {
+    return note.trim();
+  }
+
+  if (!heardText) return note ? note.trim() : '未指定';
+
+  let cleaned = heardText;
+  cleaned = cleaned.replace(/(?:rm|RM)\s*\d+(?:\.\d+)?/g, '');
+  cleaned = cleaned.replace(/\d+(?:\.\d+)?\s*(?:块钱|块|元|ringgit|money|rm|RM)/gi, '');
+  cleaned = cleaned.replace(/\d+(?:\.\d+)?/g, '');
+
+  for (const word of paymentWords) {
+    const regex = new RegExp(word.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'gi');
+    cleaned = cleaned.replace(regex, '');
+  }
+
+  for (const word of fillers) {
+    const isEnglish = /^[a-zA-Z]+$/.test(word);
+    const regexStr = isEnglish ? `\\b${word}\\b` : word;
+    const regex = new RegExp(regexStr, 'gi');
+    cleaned = cleaned.replace(regex, '');
+  }
+
+  cleaned = cleaned.replace(/[，。、,.?？!！+&()\[\]{}'\"\\/]+/g, ' ');
+  cleaned = cleaned.trim();
+  cleaned = cleaned.replace(/\s+/g, '、');
+
+  if (!cleaned || isGenericOrEmpty(cleaned)) {
+    return note ? note.trim() : '未指定';
+  }
+
+  return cleaned;
+}
+
 export default async (req, res) => {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: '方法不支持，请使用 POST' });
@@ -45,8 +134,8 @@ Analyze the input text to understand the user's meaning, context, and intent, th
 CRITICAL INSTRUCTIONS:
 1. Understand the user's meaning semantically, not through rigid keyword lists. Do not manually restrict to specific lists of food or item names.
 2. Support Chinese, English, Malay, and mixed Malaysian daily speech.
-3. Preserve names of food, products, brands, movies, games, courses, places, and services in their original language/form as much as possible. Do not simplify or translate specific names unless absolutely necessary (e.g. keep "宫崎骏的 DVD 机", "Nasi Lemak", "Ice Lemon Tea" exactly as is).
-4. The note field should contain what the user actually bought, ate, drank, received, or paid for.
+3. The note field must contain the actual, specific item, product, brand, movie, game, course, place, service, food, or drink that the user actually bought, ate, drank, received, or paid for. Remove filler/action words from the note, such as "我", "今天", "买", "吃", "喝", "花", "用", "买了", "吃了", "喝了", "I", "today", "buy", "eat", "drink", "saya", "beli", "makan", as well as any amount/currency/payment method words.
+4. Do NOT translate or rewrite item names unless absolutely necessary. Keep them in their original language and phrasing spoken by the user (e.g. keep "宫崎骏的 DVD 机", "Nasi Lemak", "Ice Lemon Tea" exactly as is).
 5. The amount field must contain a number only. Do NOT include currency symbols or text like RM, 块, ringgit, etc.
 6. The category must be mapped based on semantic meaning to one of the following exact categories:
    - "吃饭": for food, drinks, meals, restaurants, cafes, hawker food, beverages, and daily eating/drinking.
@@ -69,8 +158,9 @@ CRITICAL INSTRUCTIONS:
 9. Amount cardinality rules:
    - One amount rule: If the user mentions one amount and multiple items, create one transaction object in "items" and combine the item names into the note.
    - Multiple amount rule: Only create multiple transaction objects in "items" when the user clearly gives multiple separate item-price pairs.
-10. The transaction_date must be formatted as "YYYY-MM-DD". Calculate it relative to today's date (${currentDate}) if relative terms like "昨天" (yesterday) or "yesterday" are used. Default to "${currentDate}" if no date is mentioned.
+10. The transaction_date must be formatted as "YYYY-MM-DD". Calculate it relative to today's date (${currentDate}) if relative terms like "昨天" or "yesterday" are used. Default to "${currentDate}" if no date is mentioned.
 11. If something is uncertain, choose the safest fallback instead of guessing too hard.
+12. The heard_text field in the response must contain the original text input provided by the user.
 
 Output strict JSON conforming to the response schema. No markdown formatting, no code blocks (do not wrap in \`\`\`json), and no explanations.`;
 
@@ -101,6 +191,7 @@ Output strict JSON conforming to the response schema. No markdown formatting, no
           responseSchema: {
             type: 'OBJECT',
             properties: {
+              heard_text: { type: 'STRING' },
               items: {
                 type: 'ARRAY',
                 items: {
@@ -120,10 +211,10 @@ Output strict JSON conforming to the response schema. No markdown formatting, no
               },
               detected_total: { type: 'NUMBER', nullable: true },
               calculated_total: { type: 'NUMBER' },
-              total_matches: { type: 'BOOLEAN' },
+              total_matches: { type: 'BOOLEAN', nullable: true },
               warnings: { type: 'ARRAY', items: { type: 'STRING' } }
             },
-            required: ['items', 'calculated_total'],
+            required: ['heard_text', 'items', 'calculated_total'],
           },
         },
       }),
@@ -143,14 +234,23 @@ Output strict JSON conforming to the response schema. No markdown formatting, no
     }
 
     const parsed = JSON.parse(aiText);
+
+    // Backend note safety validation:
+    if (parsed.items && Array.isArray(parsed.items)) {
+      parsed.items.forEach(item => {
+        item.note = validateAndCleanNote(item.note, textInput);
+      });
+    }
     
     return res.status(200).json({
       success: true,
+      heard_text: parsed.heard_text || textInput || '',
       items: parsed.items || [],
-      detected_total: parsed.detected_total || null,
+      detected_total: parsed.detected_total !== undefined ? parsed.detected_total : null,
       calculated_total: parsed.calculated_total || 0,
       total_matches: parsed.total_matches !== undefined ? parsed.total_matches : true,
-      transcript: parsed.transcript || textInput || '',
+      warnings: parsed.warnings || [],
+      transcript: parsed.heard_text || textInput || '', // Compatibility for frontend
     });
 
   } catch (error) {
