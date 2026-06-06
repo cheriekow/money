@@ -54,6 +54,11 @@ export default async (req, res) => {
       isPro = memberProfile?.member_status === 'pro' || memberProfile?.role === 'admin';
     }
 
+    // 4. Final fallback to user metadata (some accounts use this)
+    if (!isPro) {
+      isPro = user.user_metadata?.member_status === 'pro' || !!user.user_metadata?.is_pro_member;
+    }
+
     if (!isPro) {
       return res.status(403).json({ error: 'PRO_REQUIRED' });
     }
