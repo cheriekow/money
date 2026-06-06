@@ -27,67 +27,72 @@ function validateAndCleanNote(note, heardText) {
     const cleanStr = str.toLowerCase().trim();
     if (cleanStr.length === 0) return true;
     if (genericWords.includes(cleanStr)) return true;
-    
-    // Check if it consists only of fillers or payments
-    const words = cleanStr.split(/[\s,，、]+/);
-    const nonFillerWords = words.filter(w => w && !fillers.includes(w) && !paymentWords.includes(w));
-    if (nonFillerWords.length === 0) return true;
-    
     return false;
   };
 
-  const getCleanWords = (str) => {
-    let temp = str.toLowerCase();
-    for (const word of [...fillers, ...paymentWords, ...genericWords]) {
-      const isEnglish = /^[a-zA-Z]+$/.test(word);
-      const regexStr = isEnglish ? `\\b${word}\\b` : word;
-      const regex = new RegExp(regexStr, 'gi');
-      temp = temp.replace(regex, '');
+  const isComponentInHeard = (comp, heard) => {
+    const cleanComp = comp.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]/g, '');
+    const cleanHeard = heard.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]/g, '');
+    if (!cleanComp) return false;
+    return cleanHeard.includes(cleanComp);
+  };
+
+  // Validate the original note returned by AI
+  if (note && !isGenericOrEmpty(note)) {
+    const parts = note.split(/[,，、和及与&]+/);
+    const validParts = parts.filter(p => p.trim().length > 0);
+    if (validParts.length > 0 && validParts.every(part => isComponentInHeard(part, heardText))) {
+      return note.trim();
     }
-    return temp.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]+/g, '');
-  };
-
-  const isRelated = (n, h) => {
-    const cleanN = getCleanWords(n);
-    const cleanH = getCleanWords(h);
-    if (!cleanN || !cleanH) return false;
-    const nChars = [...cleanN];
-    const matches = nChars.filter(char => cleanH.includes(char));
-    return matches.length > 0;
-  };
-
-  if (note && !isGenericOrEmpty(note) && isRelated(note, heardText)) {
-    return note.trim();
   }
 
+  // Otherwise, rebuild note from heardText
   if (!heardText) return note ? note.trim() : '未指定';
 
   let cleaned = heardText;
+  
+  // 1. Remove currency and numeric amount words
   cleaned = cleaned.replace(/(?:rm|RM)\s*\d+(?:\.\d+)?/g, '');
   cleaned = cleaned.replace(/\d+(?:\.\d+)?\s*(?:块钱|块|元|ringgit|money|rm|RM)/gi, '');
   cleaned = cleaned.replace(/\d+(?:\.\d+)?/g, '');
 
+  // 2. Remove payment method words
   for (const word of paymentWords) {
     const regex = new RegExp(word.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'gi');
     cleaned = cleaned.replace(regex, '');
   }
 
+  // 3. Replace separators with '|'
+  const separators = ['还有', '和', '与', '及', 'and', 'then', 'dan'];
+  let separated = cleaned;
+  separated = separated.replace(/[，。、,.?？!！+&()\[\]{}'\"\\/]+/g, '|');
+  for (const sep of separators) {
+    const isEnglish = /^[a-zA-Z]+$/.test(sep);
+    const regexStr = isEnglish ? `\\b${sep}\\b` : sep;
+    const regex = new RegExp(regexStr, 'gi');
+    separated = separated.replace(regex, '|');
+  }
+
+  // 4. Remove filler/action words
+  let itemsStr = separated;
   for (const word of fillers) {
     const isEnglish = /^[a-zA-Z]+$/.test(word);
     const regexStr = isEnglish ? `\\b${word}\\b` : word;
     const regex = new RegExp(regexStr, 'gi');
-    cleaned = cleaned.replace(regex, '');
+    itemsStr = itemsStr.replace(regex, '');
   }
 
-  cleaned = cleaned.replace(/[，。、,.?？!！+&()\[\]{}'\"\\/]+/g, ' ');
-  cleaned = cleaned.trim();
-  cleaned = cleaned.replace(/\s+/g, '、');
+  // 5. Split by '|', trim and filter empty/generic
+  const rawItems = itemsStr.split('|');
+  const items = rawItems
+    .map(item => item.trim())
+    .filter(item => item.length > 0 && !isGenericOrEmpty(item));
 
-  if (!cleaned || isGenericOrEmpty(cleaned)) {
+  if (items.length === 0) {
     return note ? note.trim() : '未指定';
   }
 
-  return cleaned;
+  return items.join('、');
 }
 
 export default async (req, res) => {
@@ -161,6 +166,7 @@ CRITICAL INSTRUCTIONS:
 10. The transaction_date must be formatted as "YYYY-MM-DD". Calculate it relative to today's date (${currentDate}) if relative terms like "昨天" or "yesterday" are used. Default to "${currentDate}" if no date is mentioned.
 11. If something is uncertain, choose the safest fallback instead of guessing too hard.
 12. The heard_text field in the response must contain the original text input provided by the user.
+13. If you are unsure about an item name, preserve the closest heard phrase in the note. Do not invent or normalize it.
 
 Output strict JSON conforming to the response schema. No markdown formatting, no code blocks (do not wrap in \`\`\`json), and no explanations.`;
 
@@ -238,6 +244,7 @@ Output strict JSON conforming to the response schema. No markdown formatting, no
     // Backend note safety validation:
     if (parsed.items && Array.isArray(parsed.items)) {
       parsed.items.forEach(item => {
+        item.original_note = item.note || ''; // preserve original Gemini note
         item.note = validateAndCleanNote(item.note, textInput);
       });
     }

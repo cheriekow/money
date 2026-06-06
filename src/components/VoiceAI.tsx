@@ -150,6 +150,22 @@ export const VoiceAI: React.FC<VoiceAIProps> = ({
 
       const resData = await response.json();
       if (resData.success) {
+        // Print debug logs in browser console
+        console.log('--- AI Voice Accounting Extraction Debug ---');
+        console.log('heard_text:', resData.heard_text || text);
+        if (resData.items && resData.items.length > 0) {
+          resData.items.forEach((item: any, idx: number) => {
+            console.log(`Item #${idx + 1}:`);
+            console.log('  original Gemini note:', item.original_note || item.note);
+            console.log('  final cleaned note:', item.note);
+            console.log('  confidence:', item.confidence);
+          });
+        } else {
+          console.log('No items extracted.');
+        }
+        console.log('warnings:', resData.warnings || []);
+        console.log('---------------------------------------------');
+
         onAIParsingComplete({
           mode: 'ai',
           sourceLabel: 'AI 语音记账',
@@ -158,7 +174,7 @@ export const VoiceAI: React.FC<VoiceAIProps> = ({
           detected_total: resData.detected_total || null,
           calculated_total: resData.calculated_total || 0,
           total_matches: resData.total_matches !== undefined ? resData.total_matches : true,
-          warnings: []
+          warnings: resData.warnings || []
         });
         triggerFeedback('语音解析成功！', 'success');
       } else {
