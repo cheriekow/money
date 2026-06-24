@@ -16,8 +16,11 @@ export const mapCategory = (
   const existingCat = Object.keys(catsToUse).find(c => c.toLowerCase() === normalized.toLowerCase());
   if (existingCat) return existingCat;
   
+  // Try exact match with "自定义" if passed directly
+  if (normalized === '自定义') return '自定义';
+
   // Fallback
-  return type === 'expense' ? (Object.keys(categories)[0] || '自定义') : (Object.keys(incomeCategories)[0] || '其他收入');
+  return type === 'expense' ? '自定义' : '其他收入';
 };
 
 export const mapPaymentMethod = (
@@ -32,6 +35,8 @@ export const mapPaymentMethod = (
   if (normalized === '现金' || normalized === 'cash' || normalized === 'tunai') return 'pay-cash';
   if (normalized === 'tng' || normalized === "touch 'n go" || normalized === "touch n go") return 'pay-tng';
   if (normalized === '银行卡' || normalized === 'bank transfer' || normalized === 'card') return 'pay-bank';
+
+  if (normalized === '自定义') return '自定义';
 
   // Fallback to exact ID match if it happens to match
   const exists = paymentMethods.find(m => m.id === normalized || m.name.toLowerCase() === normalized);

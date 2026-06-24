@@ -743,6 +743,11 @@ export default function App() {
     }
 
     const item = result.items[0];
+    if (item.amount === undefined || item.amount === null || isNaN(item.amount)) {
+      triggerFeedback('没有识别到金额，请再说一次。', 'info');
+      return;
+    }
+
     const detectedType = item.type === 'income' ? 'income' : 'expense';
 
     const newTx = {
