@@ -238,10 +238,10 @@ CRITICAL INSTRUCTIONS:
    - "吃饭" (for food, drinks, meals, restaurants, cafes, hawker food, beverages, daily eating/drinking, dishes like nasi lemak, ice lemon tea, roti planta, chicken chop, etc.)
    - "交通" (for petrol, parking, toll, Grab, taxi, train, bus, transport, car travel cost, tayar/tyre, etc.)
    - "网购" (for online shopping and e-commerce)
-   - "逛街" (for offline shopping, clothes, shoes, lifestyle)
+   - "逛街" (for offline shopping, clothes, shoes, lifestyle, movies, entertainment, cinema, karaoke, fun activities)
    - "日常用品" (for groceries, household items, toiletries)
    - "收入" (for income, salary, bonus, money received)
-   - "自定义" (when category is unclear, unusual goods, electronics, movie/game items, etc.)
+   - "自定义" (when category is unclear, unusual goods, electronics, game items, etc.)
 6. The payment_method must be mapped to one of the following exact strings:
    - "TnG" (for Touch 'n Go, TNG, e-wallet, 电子钱包)
    - "现金" (for cash, tunai)
