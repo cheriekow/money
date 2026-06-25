@@ -256,7 +256,7 @@ CRITICAL INSTRUCTIONS:
 
 Output strict JSON conforming to the response schema. No markdown formatting, no code blocks (do not wrap in \`\`\`json), and no explanations.`;
 
-    const baseModelName = process.env.GEMINI_VOICE_MODEL || process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite';
+    const baseModelName = process.env.GEMINI_VOICE_MODEL || process.env.GEMINI_MODEL || 'gemini-2.5-flash';
     const retryModelName = process.env.GEMINI_RETRY_MODEL || 'gemini-2.5-pro';
     const apiKey = process.env.GEMINI_API_KEY;
     
