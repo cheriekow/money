@@ -131,14 +131,7 @@ function validateAndCleanNote(note, heardText) {
     }
   }
 
-  // If the AI note is valid, check if it's incomplete compared to rebuilt note
-  if (isNoteValid && rebuiltNote) {
-    const aiCount = getItemsCount(note);
-    const rebuiltCount = getItemsCount(rebuiltNote);
-    if (rebuiltCount > aiCount) {
-      isNoteValid = false; // prefer rebuilt note if it has more items
-    }
-  }
+  // Trust AI note item count, no longer aggressively overriding with rebuilt note.
 
   if (isNoteValid) {
     // Reformat/capitalize the valid note parts just to make sure it looks neat
@@ -354,7 +347,12 @@ Output strict JSON conforming to the response schema. No markdown formatting, no
         parsed = await runGemini(baseModelName);
       } catch (err) {
         console.warn(`[DEBUG Backend] primary model (${baseModelName}) failed, trying fallback:`, err.message);
-        parsed = await runGemini(retryModelName);
+        try {
+          parsed = await runGemini(retryModelName);
+        } catch (err2) {
+          console.warn(`[DEBUG Backend] secondary model (${retryModelName}) failed, trying tertiary gemini-1.5-flash:`, err2.message);
+          parsed = await runGemini('gemini-1.5-flash');
+        }
       }
       
       const needsRetry = 
