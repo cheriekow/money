@@ -2,148 +2,14 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 function validateAndCleanNote(note, heardText) {
-  const fillers = [
-    // Chinese
-    '我', '今天', '刚刚', '然后', '还有', '吃了', '吃', '喝了', '喝', '买了', '买', '花了', '花', '用', '支付', '付款', '消费', '了',
-    // English
-    'i', 'today', 'just', 'and', 'then', 'ate', 'eat', 'drank', 'drink', 'bought', 'buy', 'spent', 'paid', 'using', 'with',
-    // Malay
-    'saya', 'hari ini', 'tadi', 'dan', 'makan', 'minum', 'beli', 'bayar', 'guna'
-  ];
-
-  const paymentWords = [
-    'touch n go', 'touch \'n go', 'tng', 'e-wallet', 'ewallet', '电子钱包',
-    'cash', 'tunai', '现金',
-    'bank transfer', 'online banking', 'duitnow', 'debit card', 'credit card', 'card', 'bank', 'transfer', 'debit', 'credit', '转账', '银行卡'
-  ];
-
-  const genericWords = [
-    'payment', 'expense', 'income', '吃饭', '逛街', '网购', '日常用品', '交通', '收入', '自定义',
-    '买东西', '消费', '支出', '买了的东西', '东西', '买的东西', '买了东西', '收支', '记账', 'food', 'item', 'unknown', 's7',
-    'something', 'stuff', 'expenses', 'incomes', 'nothing', 'none', 'null', 'undefined', 'na', 'n/a', 'transaction', 'transactions'
-  ];
-
-  const currencyWords = ['ringgit', '块钱', '块', '元', '钱', 'rm', 'RM'];
-
-  const isGenericOrEmpty = (str) => {
-    if (!str) return true;
-    const cleanStr = str.toLowerCase().trim();
-    if (cleanStr.length === 0) return true;
-    if (cleanStr.length === 1 && !/[\u4e00-\u9fa5]/.test(cleanStr)) return true;
-    if (genericWords.includes(cleanStr)) return true;
-    return false;
-  };
-
-  const isComponentInHeard = (comp, heard) => {
-    const cleanComp = comp.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]/g, '');
-    const cleanHeard = heard.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]/g, '');
-    if (!cleanComp) return false;
-    return cleanHeard.includes(cleanComp);
-  };
-
-  const capitalizeWords = (str) => {
-    return str.split(' ').map(word => {
-      if (/^[a-zA-Z]+$/.test(word)) {
-        return word.charAt(0).toUpperCase() + word.slice(1);
-      }
-      return word;
-    }).join(' ');
-  };
-
-  const hasChinese = (str) => /[\u4e00-\u9fa5]/.test(str);
-
-  const getItemsCount = (str) => {
-    if (!str) return 0;
-    return str.split(/[,，、和及与&]+/).map(s => s.trim()).filter(s => s.length > 0).length;
-  };
-
-  // Helper to rebuild note from transcript
-  const rebuildNote = (transcript) => {
-    if (!transcript) return '';
-    let cleaned = transcript;
-    
-    // 1. Remove currency and numeric amount words
-    cleaned = cleaned.replace(/(?:rm|RM)\s*\d+(?:\.\d+)?/g, '');
-    cleaned = cleaned.replace(/\d+(?:\.\d+)?\s*(?:块钱|块|元|ringgit|money|rm|RM)/gi, '');
-    cleaned = cleaned.replace(/\d+(?:\.\d+)?/g, '');
-
-    // Remove standalone currency words
-    for (const word of currencyWords) {
-      const regex = new RegExp(`\\b${word}\\b|${word}`, 'gi');
-      cleaned = cleaned.replace(regex, '');
-    }
-
-    // 2. Remove payment method words
-    for (const word of paymentWords) {
-      const regex = new RegExp(word.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'gi');
-      cleaned = cleaned.replace(regex, '');
-    }
-
-    // 3. Replace separators with '|'
-    const separators = ['还有', '和', '与', '及', 'and', 'then', 'dan'];
-    let separated = cleaned;
-    separated = separated.replace(/[，。、,.?？!！+&()\[\]{}'\"\\/]+/g, '|');
-    for (const sep of separators) {
-      const isEnglish = /^[a-zA-Z]+$/.test(sep);
-      const regexStr = isEnglish ? `\\b${sep}\\b` : sep;
-      const regex = new RegExp(regexStr, 'gi');
-      separated = separated.replace(regex, '|');
-    }
-
-    // 4. Remove filler/action words
-    let itemsStr = separated;
-    for (const word of fillers) {
-      const isEnglish = /^[a-zA-Z]+$/.test(word);
-      const regexStr = isEnglish ? `\\b${word}\\b` : word;
-      const regex = new RegExp(regexStr, 'gi');
-      itemsStr = itemsStr.replace(regex, '');
-    }
-
-    // 5. Split by '|', trim, capitalize, and filter empty/generic
-    const rawItems = itemsStr.split('|');
-    const items = rawItems
-      .map(item => {
-        const trimmed = item.trim();
-        return capitalizeWords(trimmed);
-      })
-      .filter(item => item.length > 0 && !isGenericOrEmpty(item));
-
-    return items.join('、');
-  };
-
-  const rebuiltNote = rebuildNote(heardText);
-
-  // Validate the original note returned by AI
-  let isNoteValid = true;
-  if (!note || isGenericOrEmpty(note)) {
-    isNoteValid = false;
-  } else {
-    // Check for translation (Chinese characters in note but not in heardText)
-    if (hasChinese(note) && !hasChinese(heardText)) {
-      isNoteValid = false;
-    } else {
-      // Check if all parts of the AI note are in the heard text
-      const parts = note.split(/[,，、和及与&]+/);
-      const validParts = parts.filter(p => p.trim().length > 0);
-      if (validParts.length === 0 || !validParts.every(part => isComponentInHeard(part, heardText))) {
-        isNoteValid = false;
-      }
-    }
-  }
-
-  // Trust AI note item count, no longer aggressively overriding with rebuilt note.
-
-  if (isNoteValid) {
-    // Reformat/capitalize the valid note parts just to make sure it looks neat
-    const parts = note.split(/([,，、和及与&]+)/);
-    const formattedParts = parts.map(part => {
-      if (/[,，、和及与&]+/.test(part)) return part;
-      return capitalizeWords(part.trim());
-    });
-    return formattedParts.join('').trim();
-  }
-
-  return rebuiltNote || (note ? note.trim() : '未指定');
+  if (!note) return '未指定';
+  
+  // The AI is generally very good at extracting the noun.
+  // We just clean up any trailing commas or spaces.
+  let cleanNote = note.replace(/^[、，,]+|[、，,]+$/g, '').trim();
+  
+  // If it's a single generic word, we just return it anyway, no need to over-engineer.
+  return cleanNote || '未指定';
 }
 
 export default async (req, res) => {
@@ -228,13 +94,13 @@ CRITICAL INSTRUCTIONS:
 3. Do NOT translate or rewrite item names under any circumstances. Keep them in their original language and phrasing exactly as spoken. For example, keep "Nasi Lemak", "Ice Lemon Tea", "Roti Planta", "Chicken Chop", "Tayar", "宫崎骏的 DVD 机" exactly in their original language. Do not translate English/Malay item names into Chinese.
 4. The amount field must contain a number only. Do NOT include currency symbols.
 5. The category must be mapped based on semantic meaning to one of the following exact categories:
-   - "吃饭" (for food, drinks, meals, restaurants, cafes, hawker food, beverages, daily eating/drinking, dishes like nasi lemak, ice lemon tea, roti planta, chicken chop, etc.)
+   - "吃饭" (ONLY for actual food, drinks, meals, restaurants, cafes, hawker food, beverages, daily eating/drinking. DO NOT use this for activities or bills!)
    - "交通" (for petrol, parking, toll, Grab, taxi, train, bus, transport, car travel cost, tayar/tyre, etc.)
    - "网购" (for online shopping and e-commerce)
    - "逛街" (for offline shopping, clothes, shoes, lifestyle, movies, entertainment, cinema, karaoke, fun activities, 看电影, 电影, 娱乐, 唱K)
    - "日常用品" (for groceries, household items, toiletries)
    - "收入" (for income, salary, bonus, money received)
-   - "自定义" (when category is unclear, unusual goods, electronics, game items, etc.)
+   - "自定义" (CRITICAL: If the category is sports, rock climbing, medical, bills, subscription, unusual goods, electronics, or ANY activity that is NOT shopping or food, you MUST choose "自定义".)
 6. The payment_method must be mapped to one of the following exact strings:
    - "TnG" (for Touch 'n Go, TNG, e-wallet, 电子钱包)
    - "现金" (for cash, tunai)
