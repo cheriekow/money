@@ -238,7 +238,7 @@ CRITICAL INSTRUCTIONS:
    - "吃饭" (for food, drinks, meals, restaurants, cafes, hawker food, beverages, daily eating/drinking, dishes like nasi lemak, ice lemon tea, roti planta, chicken chop, etc.)
    - "交通" (for petrol, parking, toll, Grab, taxi, train, bus, transport, car travel cost, tayar/tyre, etc.)
    - "网购" (for online shopping and e-commerce)
-   - "逛街" (for offline shopping, clothes, shoes, lifestyle, movies, entertainment, cinema, karaoke, fun activities)
+   - "逛街" (for offline shopping, clothes, shoes, lifestyle, movies, entertainment, cinema, karaoke, fun activities, 看电影, 电影, 娱乐, 唱K)
    - "日常用品" (for groceries, household items, toiletries)
    - "收入" (for income, salary, bonus, money received)
    - "自定义" (when category is unclear, unusual goods, electronics, game items, etc.)
